@@ -12,7 +12,7 @@
   "permissions": [
     "activeTab",
     "tabs",
-    "contextMenus",
+    "bookmarks",
     "https://ajax.googleapis.com/"
   ]
 }

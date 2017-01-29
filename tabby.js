@@ -1,4 +1,6 @@
 (function (){
+  var categories = ['extensions'];
+
   function getTabs(callback) {
     var queryInfo = {
       currentWindow: true
@@ -64,24 +66,57 @@
       }
       chrome.tabs.update(parseInt(tabId), updateInfo); 
     } else if (classList.contains('closeBtn')) {
-      var updateInfo = {
-        active: true
-      }
+      chrome.tabs.remove(parseInt(tabId)); 
+      li.parentElement.removeChild(li);
+    } else if (classList.contains('faveBtn')) {
+      chrome.tabs.get(parseInt(tabId), function(tab) {
+        createFaveIn(categories[0], tab);
+      });
       chrome.tabs.remove(parseInt(tabId)); 
       li.parentElement.removeChild(li);
     }
   }
 
+  function createFaveIn(folderName, tab) {
+    var searchInfo = {
+      url: null,
+      title: folderName
+    };
+    chrome.bookmarks.search(searchInfo, function(searchResults) {
+      if (searchResults.length > 0) {
+        createFaveFromTab(tab, searchResults[0]);
+      } else {
+        var folderCreateInfo = {
+          url: null,
+          title: folderName
+        };
+        chrome.bookmarks.create(folderCreateInfo, function(folder) {
+          createFaveFromTab(tab, folder);
+        });
+      }
+
+    });
+  }
+
+  function createFaveFromTab(tab, parent) {
+    var createInfo = {
+      url: tab.url,
+      title: tab.title,
+      parentId: parent.id
+    };
+    chrome.bookmarks.create(createInfo);
+  }
+
   function createTab(event) {
     var createInfo = {
       active: true
-    }
+    };
     chrome.tabs.create(createInfo); 
   }
 
   document.addEventListener('DOMContentLoaded', function() {
     getTabs(function(tabs){
       renderTabList(tabs);
-    })
+    });
   });
 })();
