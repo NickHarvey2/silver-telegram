@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+
+  "name": "Tabby",
+  "description": "Organize your tabs",
+  "version": "0.1",
+
+  "browser_action": {
+    "default_icon": "keyboard-key-tab-function-512.png",
+    "default_popup": "tabby.html"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "contextMenus",
+    "https://ajax.googleapis.com/"
+  ]
+}

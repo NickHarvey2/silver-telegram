@@ -1,0 +1,79 @@
+<!doctype html>
+<!--
+ This page is shown when the extension button is clicked, because the
+ "browser_action" field in manifest.json contains the "default_popup" key with
+ value "popup.html".
+ -->
+<html>
+  <head>
+    <title>Tabby</title>
+    <style>
+      body {
+        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
+        font-size: 100%;
+        background-color: #DCDCDC;
+      }
+      #content {
+        cursor: default;
+        white-space: nowrap;
+        padding: 0px;
+      }
+      #content>ul {
+        padding: 0px;
+        margin: 0px;
+      }
+      #content>ul>li:hover {
+        cursor: default;
+        background-color: #DC9;
+      }
+      #content>ul>li {
+        cursor: default;
+        list-style-type: none;
+        padding: 5px;
+        white-space: nowrap;
+        width: 450px;
+        height: 1em;
+      }
+      #content>ul>li>span.tabTitle {
+        float: left;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        max-width: 400px;
+        padding-left: 0.5em;
+      }
+      #content>ul>li>span.closeBtn {
+        width: 1em;
+        height: 1em;
+        background-image: url('close_4-512.png');
+        background-size: 1em;
+        background-repeat: no-repeat;
+        float: right;
+      }
+      #content>ul>li>span.faveBtn {
+        width: 1em;
+        height: 1em;
+        background-image: url('bookmark-icon-30.png');
+        background-size: 1em;
+        background-repeat: no-repeat;
+        float: left;
+      }
+      #content>ul>li>span.spacer {
+        width: 1em;
+        height: 1em;
+        float: left;
+      }
+    </style>
+
+    <!--
+      - JavaScript and HTML must be in separate files: see our Content Security
+      - Policy documentation[1] for details and explanation.
+      -
+      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
+     -->
+    <script src="tabby.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+  </body>
+</html>
+
