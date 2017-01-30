@@ -6,13 +6,12 @@
   "version": "0.1",
 
   "browser_action": {
-    "default_icon": "keyboard-key-tab-function-512.png",
+    "default_icon": "tabby.png",
     "default_popup": "tabby.html"
   },
   "permissions": [
     "activeTab",
     "tabs",
-    "bookmarks",
-    "https://ajax.googleapis.com/"
+    "bookmarks"
   ]
 }
