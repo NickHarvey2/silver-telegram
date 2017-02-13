@@ -7,81 +7,19 @@
 <html>
   <head>
     <title>Tabby</title>
+    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap-theme.min.css">
+    <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <style>
       body {
         font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
         font-size: 100%;
-        background-color: transparent;
-      }
-      #content {
-        cursor: default;
-        white-space: nowrap;
-        padding: 0px;
-      }
-      #content>div>ul {
-        padding: 0px;
-        margin: 0px;
-      }
-      #content>div>ul>li:hover {
-        cursor: default;
-        background-color: #DC9;
-      }
-      #content>div>ul>li.nohover:hover {
-        cursor: default;
-        background-color: initial;
-      }
-      #content>div>ul>li {
-        cursor: default;
-        list-style-type: none;
-        padding: 5px;
-        white-space: nowrap;
-        width: 450px;
-        height: 1em;
-      }
-      #content span.title {
-        float: left;
         text-overflow: ellipsis;
         overflow: hidden;
         max-width: 400px;
-        padding-left: 0.5em;
-		margin-top: -5px;
-      }
-      #content span.closeBtn {
-        background-image: url('close.png');
-      }
-      #content span.faveBtn {
-        background-image: url('save.png');
-      }
-      #content span.plusBtn {
-        background-image: url('plus.png');
-      }
-	  #content span.btn {
-        width: 1em;
-        height: 1em;
-        background-size: 1em;
-        background-repeat: no-repeat;
-	  }
-	  #content span.leftBtn {
-        float: left;
-	  }
-	  #content span.rightBtn {
-        float: right;
-	  }
-      #content select {
-        cursor: default;
-        padding: 5px;
-        width: 400px;
-        height: 2em;
-        line-height: 2em;
+        white-space: nowrap;
       }
     </style>
-
-    <!--
-      - JavaScript and HTML must be in separate files: see our Content Security
-      - Policy documentation[1] for details and explanation.
-      -
-      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
-     -->
     <script src="tabby.js"></script>
   </head>
   <body>
