@@ -10,10 +10,9 @@
     <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap-theme.min.css">
     <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <script src="jquery-1.12.4.min.js"></script>
     <style>
       body {
-        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
-        font-size: 100%;
         text-overflow: ellipsis;
         overflow: hidden;
         max-width: 400px;
@@ -23,7 +22,24 @@
     <script src="tabby.js"></script>
   </head>
   <body>
-    <div id="content"></div>
+    <div>
+      <div id='tabDiv'></div>
+      <div id='categoryDiv'>
+	  <div class="dropup">
+  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Dropup
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+    <li><a href="#">Action</a></li>
+    <li><a href="#">Another action</a></li>
+    <li><a href="#">Something else here</a></li>
+    <li role="separator" class="divider"></li>
+    <li><a href="#">Separated link</a></li>
+  </ul>
+</div>
+      </div>
+	</div>
   </body>
 </html>
 
