@@ -1,36 +1,30 @@
 (function (){
-
+  var catDropdown = null;
+  
   document.addEventListener('DOMContentLoaded', function() {
-    var tabDiv = document.getElementById('tabDiv')
-    var categoryDiv = document.getElementById('categoryDiv');
+    let tabContainer = $('#tabContainer')
+    let categoryContainer = $('#categoryContainer');
     
     getTabs(function(tabs) {
-      renderTabList(tabs, tabDiv);
+      renderTabList(tabs, tabContainer);
     });
 
     getBookmarks(function(bookmarks) {
-      renderCategories(bookmarks, categoryDiv);
+      renderCategories(bookmarks, categoryContainer);
     });
   });
 
-  function renderTabList(tabs, tabDiv) {
-    var tabList = document.createElement('UL');
-    tabList.className = 'nav nav-pills nav-stacked';
-    for (var tabIdx in tabs) {
-      var tabItem = document.createElement('LI');
-      var tabLink = document.createElement('A');
-      tabLink.textContent = tabs[tabIdx].title;
-      tabItem.role = 'presentation';
-      tabLink.href = '#';
-      tabLink.tabId = tabs[tabIdx].id;
-      tabLink.addEventListener('click', function(){
-        chrome.tabs.update(event.target.tabId, { active: true });
-      });
-      tabItem.className = tabs[tabIdx].active ? 'active' : '';
-      tabItem.appendChild(tabLink);
-      tabList.appendChild(tabItem);
+  function renderTabList(tabs, tabContainer) {
+  }
+
+  function renderCategories(bookmarks, categoryContainer) {
+    catDropdown = new Dropdown('Category: {item} ', categoryContainer);
+    catDropdown.addItem('None');
+    for (let i = 0; i < bookmarks.length; i++) {
+      catDropdown.addItem(bookmarks[i].title);
     }
-    tabDiv.appendChild(tabList);
+    
+    catDropdown.addBtnListener(createCategory);
   }
 
   function getTabs(callback) {
@@ -66,7 +60,122 @@
       }
     });
   }
-
-  function renderCategories(bookmarks, categoryDiv) {
-  } 
+  
+  function createCategory() {
+    let catName = prompt('Please enter a category name');
+    while (!catName) {
+      if (catName === null) {
+        return;
+      }
+      let catName = prompt('Please enter a category name\nCategory name cannot be empty');
+    }
+    catDropdown.addItem(catName);
+    getRootBookmark(function(rootBookmark) {
+      chrome.bookmarks.create({
+        title: catName,
+        url: null,
+        parentId: rootBookmark.id
+      });
+    });
+  }
+  
+  class Dropdown {
+    constructor(title, parentElement){
+      this.dropdownDiv = $('<div/>')
+        .addClass('dropdown');
+        
+      this.title = title;
+      
+      this.selected = '';
+      
+      let btnGroup = $('<div/>')
+        .addClass('btn-group')
+        .attr('role','group')
+        .appendTo(this.dropdownDiv);
+      
+      this.addCatBtn = $('<button/>')
+        .addClass('btn')
+        .addClass('btn-default')
+        .appendTo(btnGroup);
+        
+      $('<span/>')
+        .addClass('glyphicon')
+        .addClass('glyphicon-plus')
+        .appendTo(this.addCatBtn);
+      
+      this.dropdownLbl = $('<button/>')
+        .attr('id','dLbl')
+        .attr('data-toggle','dropdown')
+        .attr('type','button')
+        .attr('aria-haspopup','true')
+        .attr('aria-expanded','false')
+        .addClass('btn')
+        .addClass('btn-default')
+        .addClass('dropdown-toggle')
+        .appendTo(btnGroup);
+        
+      this.labelSpan = $('<span/>')
+        .text(this.title.replace('{item}',''))
+        .appendTo(this.dropdownLbl);
+        
+      this.caret = $('<span/>')
+        .addClass('caret')
+        .appendTo(this.dropdownLbl);
+      
+      this.dropdown = $('<ul/>')
+        .addClass('dropdown-menu')
+        .attr('aria-labelledby','dLbl')
+        .appendTo(btnGroup);
+      
+      try {
+        this.dropdownDiv.appendTo(parentElement);
+      } catch (e) {}
+    }
+    
+    addBtnListener(callback) {
+      this.addCatBtn.on('click', callback);
+    }
+    
+    removeBtnListener(callback) {
+      this.addCatBtn.off('click', callback);
+    }
+    
+    addItem(itemTitle, clickHandler) {
+      if (this.dropdown.find('li>a').filter(':contains("' + itemTitle + '")').length > 0) {
+        throw 'Cannot add item "' + itemTitle + '" - item with that name already exists';
+      }
+      
+      let item = $('<a/>')
+        .attr('href','#' + itemTitle)
+        .text(itemTitle)
+        .appendTo(
+          $('<li/>')
+            .appendTo(this.dropdown));
+      
+      var context = this;
+      item.click(function() {
+        context.selectItem(this.textContent);
+      });
+      
+      try {
+        item.click(clickHandler)
+      } catch (e) {}
+      
+      if (this.dropdown.find('li>a').length === 1) {
+        this.selectItem(itemTitle);
+      }
+    }
+    
+    selectItem(itemTitle) {
+      if (this.dropdown.find('li>a').filter(':contains("' + itemTitle + '")').length < 1) {
+        throw 'Cannot select item "' + itemTitle + '" - not found';
+      }
+      this.selected = itemTitle;
+      this.labelSpan.text(this.title.replace('{item}', itemTitle));
+    }
+    
+    get html() {
+      return this.dropdownDiv.html();
+    }
+  }
 })();

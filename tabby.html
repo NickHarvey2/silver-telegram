@@ -9,25 +9,35 @@
     <title>Tabby</title>
     <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap-theme.min.css">
-    <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <script src="jquery-1.12.4.min.js"></script>
+    <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <style>
       body {
         text-overflow: ellipsis;
         overflow-x: hidden;
 		overflow-y: auto;
-        max-width: 400px;
+        width: 800px;
         white-space: nowrap;
+		background-color: #fafafa
       }
+	  #tabContainer {
+		padding:5px;
+	  }
+	  #categoryContainer {
+		padding:5px;
+	  }
+	  #categoryContainer ul {
+		margin-bottom:10px;
+	  }
     </style>
     <script src="tabby.js"></script>
   </head>
   <body>
     <div>
-      <div id='tabDiv'></div>
-      <div id='categoryDiv'>
-	  
-      </div>
+      <span class='col-xs-6' id='tabContainer'>
+		<input id='search' type="text" class="form-control" />
+	  </span>
+      <span class='col-xs-6' id='categoryContainer'></span>
 	</div>
   </body>
 </html>
