@@ -15,6 +15,31 @@
   });
 
   function renderTabList(tabs, tabContainer) {
+    for (let i = 0; i < tabs.length; i++) {
+      let btnGrp = $('<div/>')
+        .addClass('btn-group')
+        .addClass('btn-group-justified')
+        .attr('role', 'group')
+        .attr('aria-label', '...')
+        .appendTo(tabContainer);
+      
+      $('<a/>')
+        .addClass('btn')
+        .addClass('btn-default')
+        .attr('role', 'button')
+        .text(tabs[i].title)
+        .appendTo(btnGrp);
+        
+      $('<a/>')
+        .addClass('btn')
+        .addClass('btn-default')
+        .attr('role', 'button')
+        .addClass('glyphicon-btn')
+        .appendTo(btnGrp).append($('<span/>')
+          .addClass('glyphicon')
+          .addClass('glyphicon-arrow-right')
+        )
+    }
   }
 
   function renderCategories(bookmarks, categoryContainer) {
@@ -90,12 +115,14 @@
       
       let btnGroup = $('<div/>')
         .addClass('btn-group')
+        // .addClass('btn-group-justified')
         .attr('role','group')
         .appendTo(this.dropdownDiv);
       
       this.addCatBtn = $('<button/>')
         .addClass('btn')
         .addClass('btn-default')
+        .addClass('glyphicon-btn')
         .appendTo(btnGroup);
         
       $('<span/>')

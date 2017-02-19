@@ -15,30 +15,47 @@
       body {
         text-overflow: ellipsis;
         overflow-x: hidden;
-		overflow-y: auto;
+        overflow-y: auto;
         width: 800px;
         white-space: nowrap;
-		background-color: #fafafa
+        background-color: #fafafa
       }
-	  #tabContainer {
-		padding:5px;
-	  }
-	  #categoryContainer {
-		padding:5px;
-	  }
-	  #categoryContainer ul {
-		margin-bottom:10px;
-	  }
+      .tabby-container {
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding:5px;
+        white-space: nowrap;
+        border:1px solid red;
+      }
+      .tabby-container a {
+        overflow-x: hidden;
+        max-width: 100%;
+        text-align: left;
+      }
+      .tabby-container .glyphicon-btn {
+        width: 38px;
+      }
+      #categoryContainer ul {
+        margin-bottom:10px;
+      }
+      #tabContainer .btn-group {
+        padding: 5px 0px 0px 0px;
+      }
     </style>
     <script src="tabby.js"></script>
   </head>
   <body>
-    <div>
-      <span class='col-xs-6' id='tabContainer'>
-		<input id='search' type="text" class="form-control" />
-	  </span>
-      <span class='col-xs-6' id='categoryContainer'></span>
-	</div>
+    <span class='col-xs-6 tabby-container'>
+      <div id='searchContainer'>
+        <input id='search' type="text" class="form-control" />
+      </div>
+      <div id='tabContainer'>
+      </div>
+    </span>
+    <span class='col-xs-6 tabby-container'>
+      <div id='categoryContainer'>
+      </div>
+    </span>
   </body>
 </html>
 
