@@ -20,6 +20,7 @@
 
       let btnGrp = $('<div/>')
         .addClass('btn-group')
+        .addClass('btn-group-xs')
         .addClass('pad-top')
         .attr('role', 'group')
         .attr('aria-label', '...')
@@ -68,7 +69,10 @@
                   parentId: results[0].id
                 });
               }
-            })
+            });
+            // add new item on bookmarks side
+            // remove item from tabs side
+            // close tab
           });
       }
 
@@ -101,6 +105,7 @@
           for (let i = 0; i < children.length; i++) {
             let btnGrp = $('<div/>')
               .addClass('btn-group')
+              .addClass('btn-group-xs')
               .addClass('pad-top')
               .attr('role', 'group')
               .attr('aria-label', '...')
@@ -207,6 +212,7 @@
       
       let btnGroup = $('<div/>')
         .addClass('btn-group')
+        .addClass('btn-group-xs')
         .attr('role','group')
         .appendTo(this.dropdownDiv);
       
