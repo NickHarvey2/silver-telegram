@@ -16,9 +16,11 @@
 
   function renderTabList(tabs, tabContainer) {
     for (let i = 0; i < tabs.length; i++) {
+      let tab = tabs[i];
+
       let btnGrp = $('<div/>')
         .addClass('btn-group')
-        .addClass('btn-group-justified')
+        .addClass('pad-top')
         .attr('role', 'group')
         .attr('aria-label', '...')
         .appendTo(tabContainer);
@@ -26,19 +28,28 @@
       $('<a/>')
         .addClass('btn')
         .addClass('btn-default')
+        .addClass('wide-btn')
         .attr('role', 'button')
-        .text(tabs[i].title)
+        .text(tab.title)
+        .click(function(){
+          chrome.tabs.update(tab.id, {
+            active: true
+          });
+        })
         .appendTo(btnGrp);
         
       $('<a/>')
         .addClass('btn')
         .addClass('btn-default')
+        .addClass(tab.pinned ? 'disabled' : '')
         .attr('role', 'button')
-        .addClass('glyphicon-btn')
         .appendTo(btnGrp).append($('<span/>')
           .addClass('glyphicon')
           .addClass('glyphicon-arrow-right')
         )
+
+      $('<br/>')
+        .appendTo(tabContainer);
     }
   }
 
@@ -46,10 +57,51 @@
     catDropdown = new Dropdown('Category: {item} ', categoryContainer);
     catDropdown.addItem('None');
     for (let i = 0; i < bookmarks.length; i++) {
-      catDropdown.addItem(bookmarks[i].title);
+      catDropdown.addItem(bookmarks[i].title, selectCategory);
     }
-    
     catDropdown.addBtnListener(createCategory);
+  }
+
+  function selectCategory() {
+    let bookmarkContainer = $('#bookmarkContainer');
+    bookmarkContainer.children().remove();
+    chrome.bookmarks.search({
+      title: event.target.textContent,
+      url: null
+    }, function(bookmarks) {
+      if (bookmarks.length > 0) {
+        chrome.bookmarks.getChildren(bookmarks[0].id, function(children) {
+          for (let i = 0; i < children.length; i++) {
+            let btnGrp = $('<div/>')
+              .addClass('btn-group')
+              .addClass('pad-top')
+              .attr('role', 'group')
+              .attr('aria-label', '...')
+              .appendTo(bookmarkContainer);
+              
+            $('<a/>')
+              .addClass('btn')
+              .addClass('btn-default')
+              .attr('role', 'button')
+              .appendTo(btnGrp).append($('<span/>')
+                .addClass('glyphicon')
+                .addClass('glyphicon-arrow-left')
+              )
+
+            $('<a/>')
+              .addClass('btn')
+              .addClass('btn-default')
+              .addClass('wide-btn')
+              .attr('role', 'button')
+              .text(children[i].title)
+              .appendTo(btnGrp);
+
+            $('<br/>')
+              .appendTo(bookmarkContainer);
+          }
+        });
+      }
+    });
   }
 
   function getTabs(callback) {
@@ -115,14 +167,12 @@
       
       let btnGroup = $('<div/>')
         .addClass('btn-group')
-        // .addClass('btn-group-justified')
         .attr('role','group')
         .appendTo(this.dropdownDiv);
       
       this.addCatBtn = $('<button/>')
         .addClass('btn')
         .addClass('btn-default')
-        .addClass('glyphicon-btn')
         .appendTo(btnGroup);
         
       $('<span/>')
@@ -138,15 +188,12 @@
         .attr('aria-expanded','false')
         .addClass('btn')
         .addClass('btn-default')
+        .addClass('wide-btn')
         .addClass('dropdown-toggle')
         .appendTo(btnGroup);
         
       this.labelSpan = $('<span/>')
         .text(this.title.replace('{item}',''))
-        .appendTo(this.dropdownLbl);
-        
-      this.caret = $('<span/>')
-        .addClass('caret')
         .appendTo(this.dropdownLbl);
       
       this.dropdown = $('<ul/>')
