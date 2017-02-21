@@ -2,7 +2,7 @@
 // refactor to use ids instead of titles
 // deal with scrollbars
 // search functionality
-// change layout so search covers entire top
+// change layout so search covers entire top /  figure out something
 
 (function (){
   var catDropdown = null;
@@ -25,6 +25,13 @@
       renderTab(tabs[i], tabContainer)
     }
   }
+  
+  chrome.tabs.onUpdated.addListener(function updateTitle(tabId, changeinfo, tab) {
+    if (tab.title) {
+      $('#tab-' + tabId).text(tab.title);
+      $('#savetab-' + tabId).attr('title', tab.title);
+    }
+  });
 
   function renderTab(tab, container) {
     let btnGrp = $('<div/>')
@@ -38,9 +45,7 @@
     let title = tab.title;
     if (tab.status === 'loading') {
       if (!title) {
-        title = 'Loading';
-      } else {
-        title += ' - Loading';
+        title = 'Loading ...';
       }
     }
     
@@ -49,6 +54,7 @@
       .addClass('btn-default')
       .addClass('btn-350')
       .attr('role', 'button')
+      .attr('id','tab-' + tab.id)
       .text(title)
       .click(function(){
         chrome.tabs.update(tab.id, {
@@ -56,11 +62,11 @@
         });
       })
       .appendTo(btnGrp);
-      
+    
     let saveBtn = $('<a/>')
       .addClass('btn')
       .attr('role', 'button')
-      .attr('id', tab.id)
+      .attr('id', 'savetab-' + tab.id)
       .attr('href', tab.url)
       .attr('title', tab.title)
       .appendTo(btnGrp).append($('<span/>')
@@ -149,17 +155,18 @@
         chrome.tabs.create({
           url: this.href,
           active: false
+        }, function(tab) {
+          renderTab(tab, $('#tabContainer'));
         });
         chrome.bookmarks.remove(this.id);
         btnGrp.next('br').remove();
         btnGrp.remove();
-        // TODO add tab item
       })
       .appendTo(btnGrp).append($('<span/>')
         .addClass('glyphicon')
         .addClass('glyphicon-arrow-left')
       )
-
+      
     $('<a/>')
       .addClass('btn')
       .addClass('btn-default')
