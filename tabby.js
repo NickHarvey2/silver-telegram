@@ -5,6 +5,16 @@
     let tabContainer = $('#tabContainer');
     let categoryContainer = $('#categoryContainer');
     
+    new MutationObserver(function(mutations) {
+      for (let i = 0; i < mutations.length; i++) {
+        if ($('#tabContainer').height() + $('#searchContainer').height() > window.innerHeight) {
+          // TODO deal with scrolling
+          return;
+        }
+      }
+      // TODO deal with not scrolling
+    }).observe(tabContainer[0], { childList: true, subtree: true });
+    
     getTabs(function(tabs) {
       renderTabList(tabs, tabContainer);
     });
