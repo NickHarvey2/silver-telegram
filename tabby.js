@@ -1,3 +1,9 @@
+// TODOs
+// refactor to use ids instead of titles
+// deal with scrollbars
+// search functionality
+// change layout so search covers entire top
+
 (function (){
   var catDropdown = null;
   
@@ -16,68 +22,82 @@
 
   function renderTabList(tabs, tabContainer) {
     for (let i = 0; i < tabs.length; i++) {
-      let tab = tabs[i];
+      renderTab(tabs[i], tabContainer)
+    }
+  }
 
-      let btnGrp = $('<div/>')
-        .addClass('btn-group')
-        .addClass('btn-group-xs')
-        .addClass('pad-top')
-        .attr('role', 'group')
-        .attr('aria-label', '...')
-        .appendTo(tabContainer);
-      
-      $('<a/>')
-        .addClass('btn')
-        .addClass('btn-default')
-        .addClass('btn-350')
-        .attr('role', 'button')
-        .text(tab.title)
-        .click(function(){
-          chrome.tabs.update(tab.id, {
-            active: true
-          });
-        })
-        .appendTo(btnGrp);
-        
-      let saveBtn = $('<a/>')
-        .addClass('btn')
-        .attr('role', 'button')
-        .attr('id', tab.id)
-        .attr('href', tab.url)
-        .attr('title', tab.title)
-        .appendTo(btnGrp).append($('<span/>')
-          .addClass('glyphicon')
-          .addClass('glyphicon-arrow-right')
-        );
-      
-      if (tab.pinned) {
-        saveBtn
-          .addClass('btn-default')
-          .addClass('disabled');
+  function renderTab(tab, container) {
+    let btnGrp = $('<div/>')
+      .addClass('btn-group')
+      .addClass('btn-group-xs')
+      .addClass('pad-top')
+      .attr('role', 'group')
+      .attr('aria-label', '...')
+      .appendTo(container);
+
+    let title = tab.title;
+    if (tab.status === 'loading') {
+      if (!title) {
+        title = 'Loading';
       } else {
-        saveBtn
-          .addClass('btn-warning')
-          .click(function() {
-            var context = this;
-            chrome.bookmarks.search({
-              title: catDropdown.selected
-            }, function(results) {
-              if (results.length > 0) {
-                chrome.bookmarks.create({
-                  title: context.title,
-                  url: context.href,
-                  parentId: results[0].id
-                });
-              }
-            });
-            // add new item on bookmarks side
-            // remove item from tabs side
-            // close tab
-          });
+        title += ' - Loading';
       }
+    }
+    
+    $('<a/>')
+      .addClass('btn')
+      .addClass('btn-default')
+      .addClass('btn-350')
+      .attr('role', 'button')
+      .text(title)
+      .click(function(){
+        chrome.tabs.update(tab.id, {
+          active: true
+        });
+      })
+      .appendTo(btnGrp);
+      
+    let saveBtn = $('<a/>')
+      .addClass('btn')
+      .attr('role', 'button')
+      .attr('id', tab.id)
+      .attr('href', tab.url)
+      .attr('title', tab.title)
+      .appendTo(btnGrp).append($('<span/>')
+        .addClass('glyphicon')
+        .addClass('glyphicon-arrow-right')
+      );
 
-      $('<br/>')
-        .appendTo(tabContainer);
+    $('<br/>')
+      .appendTo(container);
+    
+    if (tab.pinned) {
+      saveBtn
+        .addClass('btn-default')
+        .addClass('disabled');
+    } else {
+      saveBtn
+        .addClass('btn-warning')
+        .click(function() {
+          //create bookmark from tab
+          var context = this;
+          chrome.bookmarks.search({
+            title: catDropdown.selected
+          }, function(results) {
+            if (results.length > 0) {
+              chrome.bookmarks.create({
+                title: context.title,
+                url: context.href,
+                parentId: results[0].id
+              }, function(createdBookmark) {
+                renderBookmark(createdBookmark, $('#bookmarkContainer'));
+                btnGrp.next('br').remove();
+                btnGrp.remove();
+                chrome.tabs.remove(tab.id);
+              });
+            }
+          });
+        });
     }
   }
 
@@ -103,48 +123,57 @@
             return child.url != null;
           });
           for (let i = 0; i < children.length; i++) {
-            let btnGrp = $('<div/>')
-              .addClass('btn-group')
-              .addClass('btn-group-xs')
-              .addClass('pad-top')
-              .attr('role', 'group')
-              .attr('aria-label', '...')
-              .appendTo(bookmarkContainer);
-              
-            $('<a/>')
-              .addClass('btn')
-              .addClass('btn-warning')
-              .attr('href', children[i].url)
-              .attr('id', children[i].id)
-              .attr('role', 'button')
-              .click(function() {
-                chrome.tabs.create({url:this.href});
-                chrome.bookmarks.remove(this.id);
-                // No need to update list, since creating a new tab steals focus and closes the extension popup
-              })
-              .appendTo(btnGrp).append($('<span/>')
-                .addClass('glyphicon')
-                .addClass('glyphicon-arrow-left')
-              )
-
-            $('<a/>')
-              .addClass('btn')
-              .addClass('btn-default')
-              .addClass('btn-350')
-              .attr('href', children[i].url)
-              .attr('role', 'button')
-              .text(children[i].title)
-              .click(function() {
-                chrome.tabs.create({url:this.href});
-              })
-              .appendTo(btnGrp);
-
-            $('<br/>')
-              .appendTo(bookmarkContainer);
+            renderBookmark(children[i], bookmarkContainer);
           }
         });
       }
     });
+  }
+
+  function renderBookmark(bookmark, container) {
+    let btnGrp = $('<div/>')
+      .addClass('btn-group')
+      .addClass('btn-group-xs')
+      .addClass('pad-top')
+      .attr('role', 'group')
+      .attr('aria-label', '...')
+      .appendTo(container);
+      
+    $('<a/>')
+      .addClass('btn')
+      .addClass('btn-warning')
+      .attr('href', bookmark.url)
+      .attr('id', bookmark.id)
+      .attr('role', 'button')
+      .click(function() {
+        chrome.tabs.create({
+          url: this.href,
+          active: false
+        });
+        chrome.bookmarks.remove(this.id);
+        btnGrp.next('br').remove();
+        btnGrp.remove();
+        // TODO add tab item
+      })
+      .appendTo(btnGrp).append($('<span/>')
+        .addClass('glyphicon')
+        .addClass('glyphicon-arrow-left')
+      )
+
+    $('<a/>')
+      .addClass('btn')
+      .addClass('btn-default')
+      .addClass('btn-350')
+      .attr('href', bookmark.url)
+      .attr('role', 'button')
+      .text(bookmark.title)
+      .click(function() {
+        chrome.tabs.create({url:this.href});
+      })
+      .appendTo(btnGrp);
+
+    $('<br/>')
+      .appendTo(container);
   }
 
   function getTabs(callback) {
