@@ -5,15 +5,17 @@
     let tabContainer = $('#tabContainer');
     let categoryContainer = $('#categoryContainer');
     
-    new MutationObserver(function(mutations) {
+    let observer = new MutationObserver(function(mutations) {
       for (let i = 0; i < mutations.length; i++) {
-        if ($('#tabContainer').height() + $('#searchContainer').height() > window.innerHeight) {
-          // TODO deal with scrolling
+        if ($('#tabContainer').parent().outerHeight(true) > window.innerHeight || $('#categoryContainer').parent().outerHeight(true) > window.innerHeight) {
+          $('body').addClass('scroll-pad');
           return;
         }
       }
-      // TODO deal with not scrolling
-    }).observe(tabContainer[0], { childList: true, subtree: true });
+      $('body').removeClass('scroll-pad');
+    });
+    observer.observe(tabContainer[0], { childList: true });
+    observer.observe(categoryContainer[0], { childList: true });
     
     getTabs(function(tabs) {
       renderTabList(tabs, tabContainer);
