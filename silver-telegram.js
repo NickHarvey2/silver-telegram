@@ -25,12 +25,12 @@
       renderCategories(bookmarks, categoryContainer);
     });
     
-    $('body').on('drag', '.movable', function() {
-      if ($(this).prev('.movable')) {
-        console.log($(this).prev('.movable').offset());
-        console.log(event.pageY);
-      }
-    });
+    // $('body').on('drag', '.movable', function() {
+      // if ($(this).prev('.movable')) {
+        // console.log($(this).prev('.movable').offset());
+        // console.log(event.pageY);
+      // }
+    // });
   });
 
   function renderTabList(tabs, tabContainer) {
@@ -50,10 +50,13 @@
     let btnGrp = $('<div/>')
       .addClass('btn-group')
       .addClass('btn-group-xs')
-      .addClass('pad-top')
       .attr('role', 'group')
       .attr('aria-label', '...')
       .appendTo(container);
+    
+    if (btnGrp.index() > 0) {
+      btnGrp.addClass('pad-top');
+    }
 
     let title = tab.title;
     if (tab.status === 'loading') {
