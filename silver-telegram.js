@@ -25,13 +25,50 @@
       renderCategories(bookmarks, categoryContainer);
     });
     
-    // $('body').on('drag', '.movable', function() {
-      // if ($(this).prev('.movable')) {
-        // console.log($(this).prev('.movable').offset());
-        // console.log(event.pageY);
-      // }
-    // });
+    $('body').on('dragstart', '.movable', function() {
+    });
+    
+    $('body').on('dragover', '.movable', function() {
+    });
+    
+    $('body').on('dragdrop', '.movable', function() {
+    });
+    
+    $('body').on('keyup', '#search', function() {
+      let val = $(this).val();
+      if (val.length > 2) {
+        filterTabItems(val);
+        filterBookmarkItems(val);
+      } else {
+        filterTabItems('');
+        filterBookmarkItems('');
+      }
+    });
+    
+    $('body').on('click', '#clearSearch', function() {
+      $('#search').val('');
+      filterTabItems('');
+      filterBookmarkItems('');
+    })
   });
+  
+  function filterTabItems(filterString) {
+    if (filterString) {
+      $('#tabContainer').children('.btn-group').each(function(idx, item) {
+        if ($(item)) {
+          $(item).show();
+        } else {
+          $(item).hide();
+        }
+      });
+    } else {
+      $('#tabContainer').children('.btn-group').show();
+    }
+  }
+  
+  function filterBookmarkItems(filterString) {
+    
+  }
 
   function renderTabList(tabs, tabContainer) {
     for (let i = 0; i < tabs.length; i++) {
@@ -50,13 +87,10 @@
     let btnGrp = $('<div/>')
       .addClass('btn-group')
       .addClass('btn-group-xs')
+      .addClass('pad-top')
       .attr('role', 'group')
       .attr('aria-label', '...')
       .appendTo(container);
-    
-    if (btnGrp.index() > 0) {
-      btnGrp.addClass('pad-top');
-    }
 
     let title = tab.title;
     if (tab.status === 'loading') {

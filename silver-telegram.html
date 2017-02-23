@@ -55,15 +55,40 @@
       body.scroll-pad {
         width: 784px;
       }
+      /* BEGIN patch for lack of an input-group-xs class in bootstrap */
+      .input-group-xs>.form-control,
+      .input-group-xs>.input-group-addon,
+      .input-group-xs>.input-group-btn>.btn {
+        height: 21.2px;
+        padding: 1px 5px;
+        font-size: 12px;
+        line-height: 1.5;
+        border-radius: 0px;
+      }
+      .input-group-xs>.form-control:first-child,
+      .input-group-xs>.input-group-addon:first-child,
+      .input-group-xs>.input-group-btn>.btn:first-child {
+        border-radius: 3px 0px 0px 3px;
+      }
+      .input-group-xs>.form-control:last-child,
+      .input-group-xs>.input-group-addon:last-child,
+      .input-group-xs>.input-group-btn>.btn:last-child {
+        border-radius: 0px 3px 3px 0px;
+      }
+      /* END patch for lack of an input-group-xs class in bootstrap */
     </style>
     <script src="silver-telegram.js"></script>
   </head>
   <body>
     <span class='col-xs-6 silver-telegram-container'>
-      <!-- <div id='searchContainer' class='input-group input-group-sm'> -->
-        <!-- <span class="input-group-addon" id="sizing-addon3">Search:</span> -->
-        <!-- <input id='search' type='text' class='form-control' aria-describedby="sizing-addon3" /> -->
-      <!-- </div> -->
+      <div id='searchContainer' class='input-group input-group-xs'>
+        <input id='search' placeholder='Search ...' type='text' class='form-control btn-wide' />
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="button" id="clearSearch">
+            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+          </button>
+        </span>
+      </div>
       <div id='tabContainer'>
       </div>
     </span>
