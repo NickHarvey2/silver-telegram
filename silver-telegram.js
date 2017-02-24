@@ -55,7 +55,7 @@
   function filterTabItems(filterString) {
     if (filterString) {
       $('#tabContainer').children('.btn-group').each(function(idx, item) {
-        if ($(item)) {
+        if ($(item).children('.btn-label').text().toUpperCase().search(filterString.toUpperCase()) >= 0) {
           $(item).show();
         } else {
           $(item).hide();
@@ -67,7 +67,19 @@
   }
   
   function filterBookmarkItems(filterString) {
-    
+    if (filterString) {
+      $('#categoryContainer').hide();
+      $('#bookmarkContainer').children('.btn-group').each(function(idx, item) {
+        if ($(item).children('.btn-label').text().toUpperCase().search(filterString.toUpperCase()) >= 0) {
+          $(item).show();
+        } else {
+          $(item).hide();
+        }
+      });
+    } else {
+      $('#categoryContainer').show();
+      $('#bookmarkContainer').children('.btn-group').show();
+    }
   }
 
   function renderTabList(tabs, tabContainer) {
@@ -103,6 +115,7 @@
       .addClass('btn')
       .addClass('btn-default')
       .addClass('btn-wide')
+      .addClass('btn-label')
       .attr('role', 'button')
       .attr('id','tab-' + tab.id)
       .text(title)
@@ -219,6 +232,7 @@
       .addClass('btn')
       .addClass('btn-default')
       .addClass('btn-medium')
+      .addClass('btn-label')
       .attr('href', bookmark.url)
       .attr('role', 'button')
       .text(bookmark.title)
@@ -349,6 +363,7 @@
         .addClass('btn')
         .addClass('btn-default')
         .addClass('btn-wide')
+        .addClass('btn-label')
         .addClass('dropdown-toggle')
         .appendTo(btnGroup);
         
