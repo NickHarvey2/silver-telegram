@@ -4,6 +4,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     let tabContainer = $('#tabContainer');
     let categoryContainer = $('#categoryContainer');
+    let bookmarkContainer = $('#bookmarkContainer');
     
     let observer = new MutationObserver(function(mutations) {
       for (let i = 0; i < mutations.length; i++) {
@@ -15,7 +16,7 @@
       $('body').removeClass('scroll-pad');
     });
     observer.observe(tabContainer[0], { childList: true });
-    observer.observe(categoryContainer[0], { childList: true });
+    observer.observe(bookmarkContainer[0], { childList: true });
     
     getTabs(function(tabs) {
       renderTabList(tabs, tabContainer);
