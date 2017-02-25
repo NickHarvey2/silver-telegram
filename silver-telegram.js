@@ -148,9 +148,7 @@
         .addClass('btn-warning')
         .click(function() {
           var context = this;
-          chrome.bookmarks.search({
-            title: catDropdown.selected
-          }, function(results) {
+          chrome.bookmarks.get(catDropdown.selected, function(results) {
             if (results.length > 0) {
               chrome.bookmarks.create({
                 title: context.title,
@@ -158,7 +156,6 @@
                 parentId: results[0].id
               }, function(createdBookmark) {
                 renderBookmark(createdBookmark, $('#bookmarkContainer'));
-                btnGrp.next('br').remove();
                 btnGrp.remove();
                 chrome.tabs.remove(tab.id);
               });
@@ -169,29 +166,27 @@
   }
 
   function renderCategories(bookmarks, categoryContainer) {
-    let selected = window.localStorage.getItem('silver_telegram_selected');
+    let selected = null;
     let selectedItem = null;
+    let selectedId = window.localStorage.getItem('silver_telegram_selected');;
     catDropdown = new Dropdown('Category: {item} ', categoryContainer);
-    catDropdown.addItem('None', selectCategory, 'Silver Telegram');
     for (let i = 0; i < bookmarks.length; i++) {
-      if (selected === bookmarks[i].title) {
-        selectedItem = catDropdown.addItem(bookmarks[i].title, selectCategory);
+      if (selectedId === bookmarks[i].id) {
+        selectedItem = catDropdown.addItem(bookmarks[i].title, selectCategory, bookmarks[i].id);
+        selected = bookmarks[i].title
       } else {
-        catDropdown.addItem(bookmarks[i].title, selectCategory);
+        catDropdown.addItem(bookmarks[i].title, selectCategory, bookmarks[i].id);
       }
     }
     catDropdown.addBtnListener(createCategory);
     if (selectedItem) {
       selectCategory.apply(selectedItem[0]);
-      catDropdown.selectItem(selected, selected);
+      catDropdown.selectItem(selected, selectedId);
     }
   }
 
   function selectCategory() {
-    chrome.bookmarks.search({
-      title: this.href.split('#')[1],
-      url: null
-    }, function(bookmarks) {
+    chrome.bookmarks.get($(this).val(), function(bookmarks) {
       if (bookmarks.length > 0) {
         chrome.bookmarks.getChildren(bookmarks[0].id, function(children) {
           let bookmarkContainer = $('#bookmarkContainer');
@@ -220,10 +215,10 @@
     $('<a/>')
       .addClass('btn')
       .addClass('btn-warning')
-      .attr('href', bookmark.url)
-      .attr('id', 'restore-' + bookmark.id)
+      .data('bookmark', bookmark)
       .attr('role', 'button')
       .click(bookmarkToTab)
+      .click(bookmarkRemove)
       .appendTo(btnGrp).append($('<span/>')
         .addClass('glyphicon')
         .addClass('glyphicon-arrow-left')
@@ -234,7 +229,7 @@
       .addClass('btn-default')
       .addClass('btn-medium')
       .addClass('btn-label')
-      .attr('href', bookmark.url)
+      .data('bookmark', bookmark)
       .attr('role', 'button')
       .text(bookmark.title)
       .click(bookmarkToTab)
@@ -243,8 +238,6 @@
     $('<a/>')
       .addClass('btn')
       .addClass('btn-danger')
-      .attr('href', bookmark.url)
-      .attr('id', 'remove-' + bookmark.id)
       .attr('role', 'button')
       .click(bookmarkRemove)
       .appendTo(btnGrp).append($('<span/>')
@@ -255,21 +248,16 @@
   
   function bookmarkToTab() {
     chrome.tabs.create({
-      url: this.href,
+      url: $(this).data('bookmark').url,
       active: false
     }, function(tab) {
       renderTab(tab, $('#tabContainer'));
     });
-    chrome.bookmarks.remove(this.id.split('-')[1]);
-    let btnGrp = $(this).parentsUntil('#tabContainer').filter('.btn-group');
-    btnGrp.next('br').remove();
-    btnGrp.remove();
   }
   
   function bookmarkRemove() {
-    chrome.bookmarks.remove(this.id.split('-')[1]);
+    chrome.bookmarks.remove($(this).data('bookmark').id);
     let btnGrp = $(this).parentsUntil('#tabContainer').filter('.btn-group');
-    btnGrp.next('br').remove();
     btnGrp.remove();
   }
 
@@ -283,10 +271,10 @@
 
   function getBookmarks(callback) {
     getRootBookmark(function(rootBookmark) {
-      chrome.bookmarks.getChildren(rootBookmark.id, function(children) {
-        callback(children.filter(function(child) {
-          return child.url == null;
-        }));
+      chrome.bookmarks.getChildren(rootBookmark.id, function(bookmarks) {
+        callback([rootBookmark].concat(bookmarks.filter(function(bookmark) {
+          return bookmark.url == null;
+        })));
       });
     });
   }
@@ -325,7 +313,7 @@
         parentId: rootBookmark.id
       }, function(createdBookmark) {
           selectCategory.apply(item[0]);
-          catDropdown.selectItem(catName, catName);
+          catDropdown.selectItem(catName, createdBookmark.id);
       });
     });
   }
@@ -400,7 +388,7 @@
       }
       
       let item = $('<a/>')
-        .attr('href','#' + itemValue)
+        .val(itemValue)
         .text(itemTitle)
         .appendTo(
           $('<li/>')
@@ -426,16 +414,16 @@
     }
     
     selectItem(itemTitle, itemValue) {
+      if (typeof itemValue == 'undefined') {
+        var itemValue = itemTitle;
+      }
+      
       window.localStorage.setItem('silver_telegram_selected', itemValue);
-      if (this.dropdown.find('li>a').filter(':contains("' + itemTitle + '")').length < 1) {
+      if (this.dropdown.find('li>a').filter(function() {return $(this).val() == itemValue}).length < 1) {
         throw 'Cannot select item "' + itemTitle + '" - not found';
       }
       this.selected = itemValue;
       this.labelSpan.text(this.title.replace('{item}', itemTitle));
-    }
-    
-    get html() {
-      return this.dropdownDiv.html();
     }
   }
 })();
