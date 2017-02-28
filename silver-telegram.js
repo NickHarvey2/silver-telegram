@@ -2,7 +2,7 @@
   var catDropdown = null;
 
   function scrollPad() {
-    if ($('#tabContainer').parent().outerHeight(true) > window.innerHeight || $('#categoryContainer').parent().outerHeight(true) > window.innerHeight) {
+    if ($('#tabContainer').parent().outerHeight(true) > window.innerHeight+1 || $('#categoryContainer').parent().outerHeight(true) > window.innerHeight+1) {
       $('body').addClass('scroll-pad');
     } else {
       $('body').removeClass('scroll-pad');
@@ -113,7 +113,7 @@
       }
     }
     
-    $('<a/>')
+    let label = $('<a/>')
       .addClass('btn')
       .addClass('btn-default')
       .addClass('btn-wide')
@@ -127,6 +127,11 @@
         });
       })
       .appendTo(btnGrp);
+    
+    $('<img/>')
+      .attr('src', tab.favIconUrl)
+      .addClass('favIcon')
+      .prependTo(label);
     
     let saveBtn = $('<a/>')
       .addClass('btn')

@@ -12,6 +12,7 @@
   "permissions": [
     "activeTab",
     "tabs",
-    "bookmarks"
+    "bookmarks",
+	"file:///*"
   ]
 }
