@@ -128,10 +128,19 @@
       })
       .appendTo(btnGrp);
     
-    $('<img/>')
-      .attr('src', tab.favIconUrl)
-      .addClass('favIcon')
-      .prependTo(label);
+    let favIconUrl = tab.favIconUrl in favIconMap ? favIconMap[tab.favIconUrl] : tab.favIconUrl;
+    
+    if (favIconUrl) {
+      let favIcon = $('<img/>')
+        .attr('src', favIconUrl)
+        .addClass('favIcon')
+        .prependTo(label);
+    } else {
+      let favIcon = $('<span/>')
+        .addClass('favIcon')
+        .addClass('favIconSpacer')
+        .prependTo(label);
+    }
     
     let saveBtn = $('<a/>')
       .addClass('btn')
@@ -442,4 +451,9 @@
       this.labelSpan.text(this.title.replace('{item}', itemTitle));
     }
   }
+  
+  var favIconMap = {
+    'chrome://theme/IDR_EXTENSIONS_FAVICON@2x': 'IDR_EXTENSIONS_FAVICON@2x.png',
+    'chrome://theme/IDR_SETTINGS_FAVICON@2x': 'IDR_SETTINGS_FAVICON@2x.png'
+  };
 })();
