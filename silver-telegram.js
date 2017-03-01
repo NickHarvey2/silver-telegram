@@ -92,10 +92,29 @@
   
   chrome.tabs.onUpdated.addListener(function updateTitle(tabId, changeinfo, tab) {
     if (changeinfo.title) {
-      $('#tab-' + tabId).text(tab.title);
+      let label = $('#tab-' + tabId);
+      label.text(tab.title);
+      favIconHtml(tab.favIconUrl, label);
       $('#savetab-' + tabId).attr('title', tab.title);
     }
   });
+  
+  function favIconHtml(favIconUrl, container) {
+    if (favIconUrl in favIconMap) {
+      favIconUrl = favIconMap[favIconUrl];
+    }
+    if (favIconUrl) {
+      $('<img/>')
+        .attr('src', favIconUrl)
+        .addClass('favIcon')
+        .prependTo(container);
+    } else {
+      $('<span/>')
+        .addClass('favIcon')
+        .addClass('favIconSpacer')
+        .prependTo(container);
+    }
+  }
 
   function renderTab(tab, container) {
     let btnGrp = $('<div/>')
@@ -127,20 +146,8 @@
         });
       })
       .appendTo(btnGrp);
-    
-    let favIconUrl = tab.favIconUrl in favIconMap ? favIconMap[tab.favIconUrl] : tab.favIconUrl;
-    
-    if (favIconUrl) {
-      let favIcon = $('<img/>')
-        .attr('src', favIconUrl)
-        .addClass('favIcon')
-        .prependTo(label);
-    } else {
-      let favIcon = $('<span/>')
-        .addClass('favIcon')
-        .addClass('favIconSpacer')
-        .prependTo(label);
-    }
+      
+    favIconHtml(tab.favIconUrl, label);
     
     let saveBtn = $('<a/>')
       .addClass('btn')
@@ -247,7 +254,7 @@
         .addClass('glyphicon-arrow-left')
       )
       
-    $('<a/>')
+    let label = $('<a/>')
       .addClass('btn')
       .addClass('btn-default')
       .addClass('btn-medium')
@@ -257,6 +264,8 @@
       .text(bookmark.title)
       .click(bookmarkToTab)
       .appendTo(btnGrp);
+
+    favIconHtml(bookmark.favIconUrl, label);
       
     $('<a/>')
       .addClass('btn')
@@ -454,6 +463,7 @@
   
   var favIconMap = {
     'chrome://theme/IDR_EXTENSIONS_FAVICON@2x': 'IDR_EXTENSIONS_FAVICON@2x.png',
-    'chrome://theme/IDR_SETTINGS_FAVICON@2x': 'IDR_SETTINGS_FAVICON@2x.png'
+    'chrome://theme/IDR_SETTINGS_FAVICON@2x': 'IDR_SETTINGS_FAVICON@2x.png',
+    'chrome://theme/IDR_PRODUCT_LOGO_16@2x': 'IDR_PRODUCT_LOGO_16@2x.png'
   };
 })();
