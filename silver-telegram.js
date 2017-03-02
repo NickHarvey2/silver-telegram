@@ -264,8 +264,6 @@
       .text(bookmark.title)
       .click(bookmarkToTab)
       .appendTo(btnGrp);
-
-    favIconHtml(bookmark.favIconUrl, label);
       
     $('<a/>')
       .addClass('btn')
