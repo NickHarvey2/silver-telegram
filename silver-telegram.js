@@ -54,6 +54,12 @@
       createCategory($('#newCategoryInput').val());
       $('#newCategoryInput').val('');
     });
+    
+    $('body').on('click', '#deleteCategory', function() {
+      catDropdown.removeItem(catDropdown.selected);
+      chrome.bookmarks.removeTree(catDropdown.selected);
+      catDropdown.selectDefault();
+    });
   });
   
   function filterTabItems(filterString) {
@@ -137,10 +143,20 @@
       }
     }
     
+    let closeBtn = $('<a/>')
+      .addClass('btn')
+      .attr('role', 'button')
+      .attr('href', tab.url)
+      .attr('title', tab.title)
+      .appendTo(btnGrp).append($('<span/>')
+        .addClass('glyphicon')
+        .addClass('glyphicon-remove')
+      );
+    
     let label = $('<a/>')
       .addClass('btn')
       .addClass('btn-default')
-      .addClass('btn-wide')
+      .addClass('btn-medium')
       .addClass('btn-label')
       .attr('role', 'button')
       .attr('id','tab-' + tab.id)
@@ -157,9 +173,9 @@
     let saveBtn = $('<a/>')
       .addClass('btn')
       .attr('role', 'button')
-      .attr('id', 'savetab-' + tab.id)
       .attr('href', tab.url)
       .attr('title', tab.title)
+      .attr('id', 'savetab-' + tab.id)
       .appendTo(btnGrp).append($('<span/>')
         .addClass('glyphicon')
         .addClass('glyphicon-arrow-right')
@@ -169,32 +185,55 @@
       saveBtn
         .addClass('btn-default')
         .addClass('disabled');
+        
+      closeBtn
+        .addClass('btn-default')
+        .addClass('disabled');
+        
     } else {
       btnGrp.addClass('movable');
-      saveBtn
-        .addClass('btn-warning')
-        .click(function() {
-          var context = this;
-          chrome.bookmarks.search({
-            url: context.href
-          }, function(searchResults) {
-            if (searchResults.length === 0) {
-              chrome.bookmarks.get(catDropdown.selected, function(results) {
-                if (results.length > 0) {
-                  chrome.bookmarks.create({
-                    title: context.title,
-                    url: context.href,
-                    parentId: results[0].id
-                  }, function(createdBookmark) {
-                    renderBookmark(createdBookmark, $('#bookmarkContainer'), true);
-                    btnGrp.remove();
-                    chrome.tabs.remove(tab.id);
-                    scrollPad();
+      chrome.bookmarks.search({
+        url: tab.url
+      }, function(bookmarks) {
+        if (bookmarks.length > 0) {
+          saveBtn
+            .addClass('btn-default')
+            .addClass('disabled');
+        } else {
+          saveBtn
+            .addClass('btn-warning')
+            .click(function() {
+              var context = this;
+              chrome.bookmarks.search({
+                url: context.href
+              }, function(searchResults) {
+                if (searchResults.length === 0) {
+                  chrome.bookmarks.get(catDropdown.selected, function(results) {
+                    if (results.length > 0) {
+                      chrome.bookmarks.create({
+                        title: context.title,
+                        url: context.href,
+                        parentId: results[0].id
+                      }, function(createdBookmark) {
+                        renderBookmark(createdBookmark, $('#bookmarkContainer'), true);
+                        btnGrp.remove();
+                        chrome.tabs.remove(tab.id);
+                        scrollPad();
+                      });
+                    }
                   });
                 }
               });
-            }
-          });
+            });
+        }
+      });
+        
+      closeBtn
+        .addClass('btn-danger')
+        .click(function() {
+          btnGrp.remove();
+          chrome.tabs.remove(tab.id);
+          scrollPad();
         });
     }
 
@@ -219,7 +258,6 @@
         }
       });
     });
-    //catDropdown.addBtnListener(createCategory);
   }
 
   function selectCategory() {
@@ -337,6 +375,10 @@
     });
   }
   
+  function deleteCategory(category) {
+    console.log(category);
+  }
+  
   function createCategory(catName) {
     getRootBookmark(function(rootBookmark) {
       chrome.bookmarks.create({
@@ -386,7 +428,7 @@
         .attr('aria-expanded','false')
         .addClass('btn')
         .addClass('btn-default')
-        .addClass('btn-wide')
+        .addClass('btn-medium')
         .addClass('btn-label')
         .addClass('dropdown-toggle')
         .appendTo(btnGroup);
@@ -400,9 +442,21 @@
         .attr('aria-labelledby','dLbl')
         .appendTo(btnGroup);
       
+      this.delCatBtn = $('<a/>')
+        .attr('role', 'button')
+        .addClass('btn')
+        .addClass('btn-danger')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#delCategoryModal')
+        .appendTo(btnGroup).append($('<span/>')
+          .addClass('glyphicon')
+          .addClass('glyphicon-remove')
+        );
+      
       try {
         this.dropdownDiv.appendTo(parentElement);
       } catch (e) {}
+      
     }
     
     addBtnListener(callback) {
@@ -445,6 +499,10 @@
       return item;
     }
     
+    removeItem(itemValue) {
+      this.dropdown.find('#'+itemValue).remove();
+    }
+    
     selectItem(itemTitle, itemValue) {
       if (typeof itemValue == 'undefined') {
         var itemValue = itemTitle;
@@ -456,6 +514,14 @@
       }
       this.selected = itemValue;
       this.labelSpan.text(this.title.replace('{item}', itemTitle));
+    }
+    
+    selectDefault() {
+      let item = this.dropdown.find('li>a').first();
+      if (item.length > 0) {
+        this.selectItem(item.text(), item.val());
+        item.click();
+      }
     }
   }
   
