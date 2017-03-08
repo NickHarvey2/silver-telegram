@@ -49,6 +49,11 @@
       filterBookmarkItems('');
       scrollPad();
     })
+    
+    $('body').on('click', '#createCategory', function() {
+      createCategory($('#newCategoryInput').val());
+      $('#newCategoryInput').val('');
+    });
   });
   
   function filterTabItems(filterString) {
@@ -214,7 +219,7 @@
         }
       });
     });
-    catDropdown.addBtnListener(createCategory);
+    //catDropdown.addBtnListener(createCategory);
   }
 
   function selectCategory() {
@@ -332,21 +337,14 @@
     });
   }
   
-  function createCategory() {
-    let catName = prompt('Please enter a category name');
-    while (!catName) {
-      if (catName === null) {
-        return;
-      }
-      let catName = prompt('Please enter a category name\nCategory name cannot be empty');
-    }
-    var item = catDropdown.addItem(catName, selectCategory);
+  function createCategory(catName) {
     getRootBookmark(function(rootBookmark) {
       chrome.bookmarks.create({
         title: catName,
         url: null,
         parentId: rootBookmark.id
       }, function(createdBookmark) {
+          let item = catDropdown.addItem(catName, selectCategory, createdBookmark.id);
           selectCategory.apply(item[0]);
           catDropdown.selectItem(catName, createdBookmark.id);
       });
@@ -371,6 +369,8 @@
       this.addCatBtn = $('<button/>')
         .addClass('btn')
         .addClass('btn-primary')
+        .attr('data-toggle', 'modal')
+        .attr('data-target', '#addCategoryModal')
         .appendTo(btnGroup);
         
       $('<span/>')
@@ -451,7 +451,7 @@
       }
       
       window.localStorage.setItem('silver_telegram_selected', itemValue);
-      if (this.dropdown.find('li>a').filter(function() {return $(this).val() == itemValue}).length < 1) {
+      if (this.dropdown.find('li>a#'+itemValue).length < 1) {
         throw 'Cannot select item "' + itemTitle + '" - not found';
       }
       this.selected = itemValue;

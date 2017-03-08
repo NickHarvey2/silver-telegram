@@ -62,6 +62,9 @@
         width: 784px;
         margin-right: 16px;
       }
+      body.scroll-pad.modal-open {
+        padding-right: 0px !important;
+      }
       .favIcon {
         width: 1.2em;
         height: 1.2em;
@@ -109,6 +112,23 @@
     </span>
     <span class='col-xs-6 silver-telegram-container'>
       <div id='categoryContainer'>
+        <div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h5 class="modal-title" id="modalLabel">New Category</h5>
+              </div>
+              <div class="modal-body">
+                <input type='text' class='input-sm form-control' placeholder='New category name' id='newCategoryInput' />
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-xs" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary btn-xs" data-dismiss="modal" id='createCategory'>Create</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div id='bookmarkContainer'>
       </div>
