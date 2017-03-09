@@ -102,17 +102,21 @@
   }
   
   chrome.tabs.onUpdated.addListener(function updateTitle(tabId, changeinfo, tab) {
-    if (changeinfo.title) {
+    console.log(changeinfo);
+    console.log(tab.favIconUrl);
+    if (changeinfo.title || changeinfo.favIconUrl) {
       let label = $('#tab-' + tabId);
       label.text(tab.title);
-      favIconHtml(tab.favIconUrl, label);
       $('#savetab-' + tabId).attr('title', tab.title);
+      favIconHtml(tab.favIconUrl, label);
     }
   });
   
   function favIconHtml(favIconUrl, container) {
     if (favIconUrl in favIconMap) {
       favIconUrl = favIconMap[favIconUrl];
+    } else if (favIconUrl && typeof favIconUrl === 'string' && !favIconUrl.startsWith('http')) {
+      favIconUrl = null;
     }
     if (favIconUrl) {
       $('<img/>')
