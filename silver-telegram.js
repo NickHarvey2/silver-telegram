@@ -1,12 +1,32 @@
 (function (){
   var catDropdown = null;
 
-  function scrollPad() {
+  function updateLayout() {
     if ($('#tabContainer').parent().outerHeight(true) > window.innerHeight+1 || $('#categoryContainer').parent().outerHeight(true) > window.innerHeight+1) {
       $('body').addClass('scroll-pad');
     } else {
       $('body').removeClass('scroll-pad');
     }
+    chrome.tabs.query({
+      currentWindow: true
+    }, function(tabs) {
+      tabs.map(function(tab) {
+        let saveBtn = $('a#savetab-' + tab.id);
+        if (tab.pinned) {
+          disableSaveBtn(saveBtn)
+        } else {
+          chrome.bookmarks.search({
+            url: tab.url
+          }, function(bookmarks) {
+            if (bookmarks.length > 0) {
+              disableSaveBtn(saveBtn);
+            } else {
+              enableSaveBtn(saveBtn);
+            }
+          });
+        }
+      });
+    });
   }
   
   document.addEventListener('DOMContentLoaded', function() {
@@ -40,14 +60,14 @@
         filterTabItems('');
         filterBookmarkItems('');
       }
-      scrollPad();
+      updateLayout();
     });
     
     $('body').on('click', '#clearSearch', function() {
       $('#search').val('');
       filterTabItems('');
       filterBookmarkItems('');
-      scrollPad();
+      updateLayout();
     })
     
     $('body').on('click', '#createCategory', function() {
@@ -55,11 +75,7 @@
       $('#newCategoryInput').val('');
     });
     
-    $('body').on('click', '#deleteCategory', function() {
-      catDropdown.removeItem(catDropdown.selected);
-      chrome.bookmarks.removeTree(catDropdown.selected);
-      catDropdown.selectDefault();
-    });
+    $('body').on('click', '#deleteCategory', deleteCategory);
   });
   
   function filterTabItems(filterString) {
@@ -98,12 +114,10 @@
     tabs.map(function(tab) {
       renderTab(tab, tabContainer)
     });
-    scrollPad();
+    updateLayout();
   }
   
   chrome.tabs.onUpdated.addListener(function updateTitle(tabId, changeinfo, tab) {
-    console.log(changeinfo);
-    console.log(tab.favIconUrl);
     if (changeinfo.title || changeinfo.favIconUrl) {
       let label = $('#tab-' + tabId);
       label.text(tab.title);
@@ -115,7 +129,7 @@
   function favIconHtml(favIconUrl, container) {
     if (favIconUrl in favIconMap) {
       favIconUrl = favIconMap[favIconUrl];
-    } else if (favIconUrl && typeof favIconUrl === 'string' && !favIconUrl.startsWith('http')) {
+    } else if (favIconUrl && (typeof favIconUrl !== 'string' || !(favIconUrl.startsWith('http') || favIconUrl.startsWith('data')))) {
       favIconUrl = null;
     }
     if (favIconUrl) {
@@ -180,6 +194,7 @@
       .attr('href', tab.url)
       .attr('title', tab.title)
       .attr('id', 'savetab-' + tab.id)
+      .data('tab', tab)
       .appendTo(btnGrp).append($('<span/>')
         .addClass('glyphicon')
         .addClass('glyphicon-arrow-right')
@@ -200,35 +215,9 @@
         url: tab.url
       }, function(bookmarks) {
         if (bookmarks.length > 0) {
-          saveBtn
-            .addClass('btn-default')
-            .addClass('disabled');
+          disableSaveBtn(saveBtn)
         } else {
-          saveBtn
-            .addClass('btn-warning')
-            .click(function() {
-              var context = this;
-              chrome.bookmarks.search({
-                url: context.href
-              }, function(searchResults) {
-                if (searchResults.length === 0) {
-                  chrome.bookmarks.get(catDropdown.selected, function(results) {
-                    if (results.length > 0) {
-                      chrome.bookmarks.create({
-                        title: context.title,
-                        url: context.href,
-                        parentId: results[0].id
-                      }, function(createdBookmark) {
-                        renderBookmark(createdBookmark, $('#bookmarkContainer'), true);
-                        btnGrp.remove();
-                        chrome.tabs.remove(tab.id);
-                        scrollPad();
-                      });
-                    }
-                  });
-                }
-              });
-            });
+          enableSaveBtn(saveBtn)
         }
       });
         
@@ -237,11 +226,51 @@
         .click(function() {
           btnGrp.remove();
           chrome.tabs.remove(tab.id);
-          scrollPad();
+          updateLayout();
         });
     }
 
     return btnGrp;
+  }
+  
+  function disableSaveBtn(saveBtn) {
+    saveBtn
+      .removeClass('btn-warning')
+      .addClass('btn-default')
+      .addClass('disabled')
+      .off('click', saveBtnClickHandler);
+  }
+  
+  function enableSaveBtn(saveBtn) {
+    saveBtn
+      .removeClass('btn-default')
+      .addClass('btn-warning')
+      .removeClass('disabled')
+      .on('click', saveBtnClickHandler);
+  }
+  
+  function saveBtnClickHandler() {
+    var context = this;
+    chrome.bookmarks.search({
+      url: context.href
+    }, function(searchResults) {
+      if (searchResults.length === 0) {
+        chrome.bookmarks.get(catDropdown.selected, function(results) {
+          if (results.length > 0) {
+            chrome.bookmarks.create({
+              title: context.title,
+              url: context.href,
+              parentId: results[0].id
+            }, function(createdBookmark) {
+              renderBookmark(createdBookmark, $('#bookmarkContainer'), true);
+              $(context).parent().remove();
+              chrome.tabs.remove(parseInt($(context).attr('id').split('-')[1]));
+              updateLayout();
+            });
+          }
+        });
+      }
+    });
   }
 
   function renderCategories(bookmarks, categoryContainer) {
@@ -272,7 +301,7 @@
         item.show();
       });
     }
-    scrollPad();
+    updateLayout();
   }
 
   function renderBookmark(bookmark, container, show) {
@@ -332,7 +361,7 @@
       active: false
     }, function(tab) {
       renderTab(tab, $('#tabContainer'));
-      scrollPad();
+      updateLayout();
     });
   }
   
@@ -340,7 +369,7 @@
     chrome.bookmarks.remove($(this).data('bookmark').id);
     let btnGrp = $(this).parentsUntil('#tabContainer').filter('.btn-group');
     btnGrp.remove();
-    scrollPad();
+    updateLayout();
   }
 
   function getTabs(callback) {
@@ -380,7 +409,9 @@
   }
   
   function deleteCategory(category) {
-    console.log(category);
+    catDropdown.removeItem(catDropdown.selected);
+    chrome.bookmarks.removeTree(catDropdown.selected);
+    catDropdown.selectDefault();
   }
   
   function createCategory(catName) {
