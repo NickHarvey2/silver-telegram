@@ -200,26 +200,13 @@
         .addClass('glyphicon-arrow-right')
       );
     
-    if (tab.pinned) {
-      saveBtn
-        .addClass('btn-default')
-        .addClass('disabled');
-        
+    if (tab.pinned) {        
       closeBtn
         .addClass('btn-default')
         .addClass('disabled');
         
     } else {
       btnGrp.addClass('movable');
-      chrome.bookmarks.search({
-        url: tab.url
-      }, function(bookmarks) {
-        if (bookmarks.length > 0) {
-          disableSaveBtn(saveBtn)
-        } else {
-          enableSaveBtn(saveBtn)
-        }
-      });
         
       closeBtn
         .addClass('btn-danger')
@@ -238,7 +225,7 @@
       .removeClass('btn-warning')
       .addClass('btn-default')
       .addClass('disabled')
-      .off('click', saveBtnClickHandler);
+      .off();
   }
   
   function enableSaveBtn(saveBtn) {
@@ -246,11 +233,12 @@
       .removeClass('btn-default')
       .addClass('btn-warning')
       .removeClass('disabled')
-      .on('click', saveBtnClickHandler);
+      .one('click', saveBtnClickHandler);
   }
   
-  function saveBtnClickHandler() {
+  function saveBtnClickHandler(event) {
     var context = this;
+    event.stopImmediatePropagation();
     chrome.bookmarks.search({
       url: context.href
     }, function(searchResults) {
