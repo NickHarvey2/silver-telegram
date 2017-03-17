@@ -28,7 +28,7 @@
       });
     });
   }
-  
+
   document.addEventListener('DOMContentLoaded', function() {
     let tabContainer = $('#tabContainer');
     let categoryContainer = $('#categoryContainer');
@@ -41,16 +41,16 @@
     getBookmarks(function(bookmarks) {
       renderCategories(bookmarks, categoryContainer);
     });
-    
+
     $('body').on('dragstart', '.movable', function() {
     });
-    
+
     $('body').on('dragover', '.movable', function() {
     });
-    
+
     $('body').on('dragdrop', '.movable', function() {
     });
-    
+
     $('body').on('keyup', '#search', function() {
       let val = $(this).val();
       if (val.length > 2) {
@@ -62,22 +62,52 @@
       }
       updateLayout();
     });
-    
+
     $('body').on('click', '#clearSearch', function() {
       $('#search').val('');
       filterTabItems('');
       filterBookmarkItems('');
       updateLayout();
     })
-    
+
     $('body').on('click', '#createCategory', function() {
       createCategory($('#newCategoryInput').val());
       $('#newCategoryInput').val('');
     });
-    
+
     $('body').on('click', '#deleteCategory', deleteCategory);
+
+    $('body').on('click', '#saveAll', function() {
+      $('#tabContainer a.saveBtn').each(function(idx, item) {
+        if (!$(item).hasClass('disabled')){
+          saveBtnClickHandler.apply(item, [null, true]);
+        }
+      });
+    });
+
+    $('body').on('click', '#saveAllNewCat', function() {
+
+    });
+
+    $('body').on('click', '#openAll', function() {
+      $('#bookmarkContainer a.btn-label').filter(':visible').each(function(idx, item) {
+        bookmarkToTab.apply(item);
+      });
+    });
+
+    $('body').on('click', '#openAllNewWin', function() {
+      chrome.windows.create(function(newWin) {
+        $('#bookmarkContainer a.btn-label').filter(':visible').each(function(idx, item) {
+          if (idx === 0 && newWin.tabs.length === 1 && newWin.tabs[0].url === 'chrome://newtab/') {
+            bookmarkToTab.apply(item, [null, newWin.id, newWin.tabs[0].id]);
+          } else {
+            bookmarkToTab.apply(item, [null, newWin.id]);
+          }
+        });
+      })
+    });
   });
-  
+
   function filterTabItems(filterString) {
     if (filterString) {
       $('#tabContainer').children('.btn-group').each(function(idx, item) {
@@ -91,7 +121,7 @@
       $('#tabContainer').children('.btn-group').show();
     }
   }
-  
+
   function filterBookmarkItems(filterString) {
     if (filterString) {
       $('#categoryContainer').hide();
@@ -116,7 +146,7 @@
     });
     updateLayout();
   }
-  
+
   chrome.tabs.onUpdated.addListener(function updateTitle(tabId, changeinfo, tab) {
     if (changeinfo.title || changeinfo.favIconUrl) {
       let label = $('#tab-' + tabId);
@@ -125,7 +155,7 @@
       favIconHtml(tab.favIconUrl, label);
     }
   });
-  
+
   function favIconHtml(favIconUrl, container) {
     if (favIconUrl in favIconMap) {
       favIconUrl = favIconMap[favIconUrl];
@@ -160,7 +190,7 @@
         title = 'Loading ...';
       }
     }
-    
+
     let closeBtn = $('<a/>')
       .addClass('btn')
       .attr('role', 'button')
@@ -170,7 +200,7 @@
         .addClass('glyphicon')
         .addClass('glyphicon-remove')
       );
-    
+
     let label = $('<a/>')
       .addClass('btn')
       .addClass('btn-default')
@@ -185,11 +215,12 @@
         });
       })
       .appendTo(btnGrp);
-      
+
     favIconHtml(tab.favIconUrl, label);
-    
+
     let saveBtn = $('<a/>')
       .addClass('btn')
+      .addClass('saveBtn')
       .attr('role', 'button')
       .attr('href', tab.url)
       .attr('title', tab.title)
@@ -199,15 +230,15 @@
         .addClass('glyphicon')
         .addClass('glyphicon-arrow-right')
       );
-    
-    if (tab.pinned) {        
+
+    if (tab.pinned) {
       closeBtn
         .addClass('btn-default')
         .addClass('disabled');
-        
+
     } else {
       btnGrp.addClass('movable');
-        
+
       closeBtn
         .addClass('btn-danger')
         .click(function() {
@@ -219,7 +250,7 @@
 
     return btnGrp;
   }
-  
+
   function disableSaveBtn(saveBtn) {
     saveBtn
       .removeClass('btn-warning')
@@ -227,7 +258,7 @@
       .addClass('disabled')
       .off();
   }
-  
+
   function enableSaveBtn(saveBtn) {
     saveBtn
       .removeClass('btn-default')
@@ -235,10 +266,12 @@
       .removeClass('disabled')
       .one('click', saveBtnClickHandler);
   }
-  
-  function saveBtnClickHandler(event) {
+
+  function saveBtnClickHandler(event, keepTab) {
     var context = this;
-    event.stopImmediatePropagation();
+    if (event && typeof event.stopImmediatePropagation == 'function') {
+      event.stopImmediatePropagation();
+    }
     chrome.bookmarks.search({
       url: context.href
     }, function(searchResults) {
@@ -251,8 +284,10 @@
               parentId: results[0].id
             }, function(createdBookmark) {
               renderBookmark(createdBookmark, $('#bookmarkContainer'), true);
-              $(context).parent().remove();
-              chrome.tabs.remove(parseInt($(context).attr('id').split('-')[1]));
+              if (!keepTab) {
+                $(context).parent().remove();
+                chrome.tabs.remove(parseInt($(context).attr('id').split('-')[1]));
+              }
               updateLayout();
             });
           }
@@ -305,7 +340,7 @@
     if (!show) {
       btnGrp.hide();
     }
-      
+
     $('<a/>')
       .addClass('btn')
       .addClass('btn-warning')
@@ -317,7 +352,7 @@
         .addClass('glyphicon')
         .addClass('glyphicon-arrow-left')
       )
-      
+
     let label = $('<a/>')
       .addClass('btn')
       .addClass('btn-default')
@@ -328,7 +363,7 @@
       .text(bookmark.title)
       .click(bookmarkToTab)
       .appendTo(btnGrp);
-      
+
     $('<a/>')
       .addClass('btn')
       .addClass('btn-danger')
@@ -342,17 +377,26 @@
 
     return btnGrp;
   }
-  
-  function bookmarkToTab() {
-    chrome.tabs.create({
-      url: $(this).data('bookmark').url,
-      active: false
-    }, function(tab) {
-      renderTab(tab, $('#tabContainer'));
-      updateLayout();
-    });
+
+  function bookmarkToTab(event, windowId, tabId) {
+    if (tabId) {
+      chrome.tabs.update(tabId, {
+        url: $(this).data('bookmark').url
+      });
+    } else {
+      chrome.tabs.create({
+        url: $(this).data('bookmark').url,
+        active: false,
+        windowId: windowId
+      }, function(tab) {
+        if (!windowId) {
+          renderTab(tab, $('#tabContainer'));
+          updateLayout();
+        }
+      });
+    }
   }
-  
+
   function bookmarkRemove() {
     chrome.bookmarks.remove($(this).data('bookmark').id);
     let btnGrp = $(this).parentsUntil('#tabContainer').filter('.btn-group');
@@ -377,7 +421,7 @@
       });
     });
   }
-  
+
   function getRootBookmark(callback) {
     chrome.bookmarks.search({
       title: 'Silver Telegram',
@@ -395,13 +439,13 @@
       }
     });
   }
-  
+
   function deleteCategory(category) {
     catDropdown.removeItem(catDropdown.selected);
     chrome.bookmarks.removeTree(catDropdown.selected);
     catDropdown.selectDefault();
   }
-  
+
   function createCategory(catName) {
     getRootBookmark(function(rootBookmark) {
       chrome.bookmarks.create({
@@ -415,34 +459,34 @@
       });
     });
   }
-  
+
   class Dropdown {
     constructor(title, parentElement){
       this.dropdownDiv = $('<div/>')
         .addClass('dropdown');
-        
+
       this.title = title;
-      
+
       this.selected = '';
-      
+
       let btnGroup = $('<div/>')
         .addClass('btn-group')
         .addClass('btn-group-xs')
         .attr('role','group')
         .appendTo(this.dropdownDiv);
-      
+
       this.addCatBtn = $('<button/>')
         .addClass('btn')
         .addClass('btn-primary')
         .attr('data-toggle', 'modal')
         .attr('data-target', '#addCategoryModal')
         .appendTo(btnGroup);
-        
+
       $('<span/>')
         .addClass('glyphicon')
         .addClass('glyphicon-plus')
         .appendTo(this.addCatBtn);
-      
+
       this.dropdownLbl = $('<button/>')
         .attr('id','dLbl')
         .attr('data-toggle','dropdown')
@@ -455,16 +499,16 @@
         .addClass('btn-label')
         .addClass('dropdown-toggle')
         .appendTo(btnGroup);
-        
+
       this.labelSpan = $('<span/>')
         .text(this.title.replace('{item}',''))
         .appendTo(this.dropdownLbl);
-      
+
       this.dropdown = $('<ul/>')
         .addClass('dropdown-menu')
         .attr('aria-labelledby','dLbl')
         .appendTo(btnGroup);
-      
+
       this.delCatBtn = $('<a/>')
         .attr('role', 'button')
         .addClass('btn')
@@ -475,26 +519,26 @@
           .addClass('glyphicon')
           .addClass('glyphicon-remove')
         );
-      
+
       try {
         this.dropdownDiv.appendTo(parentElement);
       } catch (e) {}
-      
+
     }
-    
+
     addBtnListener(callback) {
       this.addCatBtn.on('click', callback);
     }
-    
+
     removeBtnListener(callback) {
       this.addCatBtn.off('click', callback);
     }
-    
-    addItem(itemTitle, clickHandler, itemValue) {      
+
+    addItem(itemTitle, clickHandler, itemValue) {
       if (typeof itemValue == 'undefined') {
         var itemValue = itemTitle;
       }
-      
+
       let item = $('<a/>')
         .val(itemValue)
         .text(itemTitle)
@@ -502,35 +546,35 @@
         .appendTo(
           $('<li/>')
             .appendTo(this.dropdown));
-      
+
       var context = this;
       item.click(function() {
         context.selectItem(itemTitle, itemValue);
       });
-      
+
       if (typeof clickHandler != 'undefined') {
         item.click(clickHandler);
       }
-      
+
       if (this.dropdown.find('li>a').length === 1) {
         this.selectItem(itemTitle, itemValue);
         if (typeof clickHandler != 'undefined') {
           clickHandler.call(item[0]);
         }
       }
-      
+
       return item;
     }
-    
+
     removeItem(itemValue) {
       this.dropdown.find('#'+itemValue).remove();
     }
-    
+
     selectItem(itemTitle, itemValue) {
       if (typeof itemValue == 'undefined') {
         var itemValue = itemTitle;
       }
-      
+
       window.localStorage.setItem('silver_telegram_selected', itemValue);
       if (this.dropdown.find('li>a#'+itemValue).length < 1) {
         throw 'Cannot select item "' + itemTitle + '" - not found';
@@ -538,7 +582,7 @@
       this.selected = itemValue;
       this.labelSpan.text(this.title.replace('{item}', itemTitle));
     }
-    
+
     selectDefault() {
       let item = this.dropdown.find('li>a').first();
       if (item.length > 0) {
@@ -547,7 +591,7 @@
       }
     }
   }
-  
+
   var favIconMap = {
     'chrome://theme/IDR_EXTENSIONS_FAVICON@2x': 'IDR_EXTENSIONS_FAVICON@2x.png',
     'chrome://theme/IDR_SETTINGS_FAVICON@2x': 'IDR_SETTINGS_FAVICON@2x.png',
