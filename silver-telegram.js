@@ -42,15 +42,6 @@
       renderCategories(bookmarks, categoryContainer);
     });
 
-    $('body').on('dragstart', '.movable', function() {
-    });
-
-    $('body').on('dragover', '.movable', function() {
-    });
-
-    $('body').on('dragdrop', '.movable', function() {
-    });
-
     $('body').on('keyup', '#search', function() {
       let val = $(this).val();
       if (val.length > 2) {
@@ -116,6 +107,11 @@
           }
         });
       })
+    });
+
+    $(function() {
+        $(".sortable").sortable();
+        $(".sortable").disableSelection();
     });
   });
 
@@ -248,8 +244,6 @@
         .addClass('disabled');
 
     } else {
-      btnGrp.addClass('movable');
-
       closeBtn
         .addClass('btn-danger')
         .click(function() {
@@ -341,7 +335,6 @@
   function renderBookmark(bookmark, container, show) {
     let btnGrp = $('<div/>')
       .addClass('btn-group')
-      .addClass('movable')
       .addClass('btn-group-xs')
       .addClass('pad-top')
       .attr('role', 'group')
