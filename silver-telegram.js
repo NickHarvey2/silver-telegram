@@ -66,7 +66,7 @@
     $('body').on('click', '#saveAll', function() {
       $('#tabContainer a.saveBtn').each(function(idx, item) {
         if (!$(item).hasClass('disabled')){
-          saveBtnClickHandler.apply(item, [null, true]);
+          tabToBookmark.apply(item, [null, true]);
         }
       });
     });
@@ -76,7 +76,7 @@
         createCategory($('#newCategoryInput').val(), function(){
           $('#tabContainer a.saveBtn').each(function(idx, item) {
             if (!$(item).hasClass('disabled')){
-              saveBtnClickHandler.apply(item, [null, true]);
+              tabToBookmark.apply(item, [null, true]);
             }
           });
         });
@@ -109,11 +109,67 @@
       })
     });
 
-    $(function() {
-        $(".sortable").sortable();
-        $(".sortable").disableSelection();
+    $('#bookmarkContainer').sortable({
+      scroll: false,
+      start: sortStart,
+      stop: sortStopBookMark,
+      over: over,
+      items: '.movable',
+      connectWith: '#tabContainer'
     });
+    $('#bookmarkContainer').disableSelection();
+    $('#tabContainer').sortable({
+      scroll: false,
+      start: sortStart,
+      stop: sortStopTab,
+      over: over,
+      items: '.movable',
+      connectWith: '#bookmarkContainer'
+    });
+    $('#tabContainer').disableSelection();
   });
+
+  function sortStart(event, ui) {
+    $(window).disablescroll();
+    ui.item.css('margin-top', window.pageYOffset);
+  }
+
+  function over(event, ui) {
+    ui.item.css('margin-top', window.pageYOffset);
+  }
+
+  function sortStopBookMark(event, ui) {
+    sortStop(event, ui);
+    $('#bookmarkContainer').children('.btn-group:visible').each(function(idx, item) {
+      let bookmark = $(item).data('bookmark');
+      chrome.bookmarks.move(bookmark.id, { index: idx });
+    });
+    if (ui.item.parent('#tabContainer').length > 0) {
+      let item = ui.item.children('a.btn-label')[0];
+      bookmarkToTab.apply(item, [null, null, null, ui.item.next()]);
+      bookmarkRemove.apply(item);
+    }
+  }
+
+  function sortStopTab(event, ui) {
+    sortStop(event, ui);
+    refreshTabOrder();
+    if (ui.item.parent('#bookmarkContainer').length > 0) {
+      let item = ui.item.children('a.btn-label')[0];
+    }
+  }
+
+  function refreshTabOrder() {
+    $('#tabContainer').children('.btn-group:visible').each(function(idx, item) {
+      let tab = $(item).data('tab');
+      chrome.tabs.move(tab.id, { index: idx });
+    });
+  }
+
+  function sortStop(event, ui) {
+    $(window).disablescroll('undo');
+    ui.item.css('margin-top', 0);
+  }
 
   function filterTabItems(filterString) {
     if (filterString) {
@@ -182,14 +238,20 @@
     }
   }
 
-  function renderTab(tab, container) {
+  function renderTab(tab, container, beforeEl) {
     let btnGrp = $('<div/>')
       .addClass('btn-group')
       .addClass('btn-group-xs')
       .addClass('pad-top')
+      .data('tab', tab)
       .attr('role', 'group')
-      .attr('aria-label', '...')
-      .appendTo(container);
+      .attr('aria-label', '...');
+
+    if (beforeEl) {
+      btnGrp.insertBefore(beforeEl);
+    } else {
+      btnGrp.appendTo(container);
+    }
 
     let title = tab.title;
     if (tab.status === 'loading') {
@@ -242,8 +304,8 @@
       closeBtn
         .addClass('btn-default')
         .addClass('disabled');
-
     } else {
+      btnGrp.addClass('movable');
       closeBtn
         .addClass('btn-danger')
         .click(function() {
@@ -269,10 +331,10 @@
       .removeClass('btn-default')
       .addClass('btn-warning')
       .removeClass('disabled')
-      .one('click', saveBtnClickHandler);
+      .one('click', tabToBookmark);
   }
 
-  function saveBtnClickHandler(event, keepTab) {
+  function tabToBookmark(event, keepTab, index) {
     var context = this;
     if (event && typeof event.stopImmediatePropagation == 'function') {
       event.stopImmediatePropagation();
@@ -337,6 +399,8 @@
       .addClass('btn-group')
       .addClass('btn-group-xs')
       .addClass('pad-top')
+      .addClass('movable')
+      .data('bookmark', bookmark)
       .attr('role', 'group')
       .attr('aria-label', '...')
       .appendTo(container);
@@ -382,7 +446,7 @@
     return btnGrp;
   }
 
-  function bookmarkToTab(event, windowId, tabId) {
+  function bookmarkToTab(event, windowId, tabId, beforeEl) {
     if (tabId) {
       chrome.tabs.update(tabId, {
         url: $(this).data('bookmark').url
@@ -394,7 +458,7 @@
         windowId: windowId
       }, function(tab) {
         if (!windowId) {
-          renderTab(tab, $('#tabContainer'));
+          renderTab(tab, $('#tabContainer'), beforeEl);
           updateLayout();
         }
       });
