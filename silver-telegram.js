@@ -1,11 +1,19 @@
 (function (){
   var catDropdown = null;
+  var zoom;
 
   function updateLayout() {
     if ($('#tabContainer').parent().outerHeight(true) > window.innerHeight+1 || $('#categoryContainer').parent().outerHeight(true) > window.innerHeight+1) {
       $('body').addClass('scroll-pad');
     } else {
       $('body').removeClass('scroll-pad');
+    }
+    if ($('#bookmarkContainer').children('.btn-group:visible').length === 0) {
+      $('#openAll').addClass('disabled');
+      $('#openAllNewWin').addClass('disabled');
+    } else {
+      $('#openAll').removeClass('disabled');
+      $('#openAllNewWin').removeClass('disabled');
     }
     chrome.tabs.query({
       currentWindow: true
@@ -84,13 +92,6 @@
       });
     });
 
-    $('body').on('click', '#addCatBtn', function(event) {
-      $('body').one('click', '#createCategory', function() {
-        createCategory($('#newCategoryInput').val());
-        $('#newCategoryInput').val('');
-      });
-    });
-
     $('body').on('click', '#openAll', function() {
       $('#bookmarkContainer a.btn-label').filter(':visible').each(function(idx, item) {
         bookmarkToTab.apply(item);
@@ -127,7 +128,27 @@
       connectWith: '#bookmarkContainer'
     });
     $('#tabContainer').disableSelection();
+
+    $('body').on('click', '#addCatBtn', function(event) {
+      $('body').one('click', '#createCategory', function() {
+        createCategoryEventHandler();
+      });
+    });
+
+    $('.modal[role="dialog"]').on('shown.bs.modal', function() {
+      $(this).find('input').first().focus();
+      $('body').on('keyup', '.modal[role="dialog"] input:visible', createCategoryEventHandler);
+    });
   });
+
+  function createCategoryEventHandler(event) {
+    if (event.which == 13 && $(this).val() && $(this).val().length > 0) {
+      createCategory($('#newCategoryInput').val());
+      $('#newCategoryInput').val('');
+      $('body').off('keyup', '.modal[role="dialog"] input:visible', createCategoryEventHandler);
+      $('.modal[role="dialog"]').modal('hide');
+    }
+  }
 
   function sortStart(event, ui) {
     $(window).disablescroll();
