@@ -140,25 +140,26 @@
 
   function sortStopBookMark(event, ui) {
     sortStop(event, ui);
-    refreshBookmarkOrder();
     if (ui.item.parent('#tabContainer').length > 0) {
       let item = ui.item.children('a.btn-label')[0];
       bookmarkToTab.apply(item, [null, null, null, ui.item.next(), refreshTabOrder]);
       bookmarkRemove.apply(item);
     }
+    refreshBookmarkOrder();
   }
 
   function sortStopTab(event, ui) {
     sortStop(event, ui);
-    refreshTabOrder();
     if (ui.item.parent('#bookmarkContainer').length > 0) {
       let $item = ui.item.children('a.saveBtn');
       if (!$item.hasClass('disabled')) {
         tabToBookmark.apply($item[0], [null, false, ui.item.next(), refreshBookmarkOrder]);
       } else {
         $("#tabContainer").sortable("cancel");
+        return;
       }
     }
+    refreshTabOrder();
   }
 
   function refreshTabOrder() {
