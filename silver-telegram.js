@@ -140,13 +140,10 @@
 
   function sortStopBookMark(event, ui) {
     sortStop(event, ui);
-    $('#bookmarkContainer').children('.btn-group:visible').each(function(idx, item) {
-      let bookmark = $(item).data('bookmark');
-      chrome.bookmarks.move(bookmark.id, { index: idx });
-    });
+    refreshBookmarkOrder();
     if (ui.item.parent('#tabContainer').length > 0) {
       let item = ui.item.children('a.btn-label')[0];
-      bookmarkToTab.apply(item, [null, null, null, ui.item.next()]);
+      bookmarkToTab.apply(item, [null, null, null, ui.item.next(), refreshTabOrder]);
       bookmarkRemove.apply(item);
     }
   }
@@ -155,7 +152,12 @@
     sortStop(event, ui);
     refreshTabOrder();
     if (ui.item.parent('#bookmarkContainer').length > 0) {
-      let item = ui.item.children('a.btn-label')[0];
+      let $item = ui.item.children('a.saveBtn');
+      if (!$item.hasClass('disabled')) {
+        tabToBookmark.apply($item[0], [null, false, ui.item.next(), refreshBookmarkOrder]);
+      } else {
+        $("#tabContainer").sortable("cancel");
+      }
     }
   }
 
@@ -163,6 +165,13 @@
     $('#tabContainer').children('.btn-group:visible').each(function(idx, item) {
       let tab = $(item).data('tab');
       chrome.tabs.move(tab.id, { index: idx });
+    });
+  }
+
+  function refreshBookmarkOrder() {
+    $('#bookmarkContainer').children('.btn-group:visible').each(function(idx, item) {
+      let bookmark = $(item).data('bookmark');
+      chrome.bookmarks.move(bookmark.id, { index: idx });
     });
   }
 
@@ -247,7 +256,7 @@
       .attr('role', 'group')
       .attr('aria-label', '...');
 
-    if (beforeEl) {
+    if (beforeEl && beforeEl.length > 0) {
       btnGrp.insertBefore(beforeEl);
     } else {
       btnGrp.appendTo(container);
@@ -334,7 +343,7 @@
       .one('click', tabToBookmark);
   }
 
-  function tabToBookmark(event, keepTab, index) {
+  function tabToBookmark(event, keepTab, beforeEl, callback) {
     var context = this;
     if (event && typeof event.stopImmediatePropagation == 'function') {
       event.stopImmediatePropagation();
@@ -350,12 +359,15 @@
               url: context.href,
               parentId: results[0].id
             }, function(createdBookmark) {
-              renderBookmark(createdBookmark, $('#bookmarkContainer'), true);
+              renderBookmark(createdBookmark, $('#bookmarkContainer'), true, beforeEl);
               if (!keepTab) {
                 $(context).parent().remove();
                 chrome.tabs.remove(parseInt($(context).attr('id').split('-')[1]));
               }
               updateLayout();
+              if (typeof callback === 'function') {
+                callback();
+              }
             });
           }
         });
@@ -394,7 +406,7 @@
     updateLayout();
   }
 
-  function renderBookmark(bookmark, container, show) {
+  function renderBookmark(bookmark, container, show, beforeEl) {
     let btnGrp = $('<div/>')
       .addClass('btn-group')
       .addClass('btn-group-xs')
@@ -404,6 +416,12 @@
       .attr('role', 'group')
       .attr('aria-label', '...')
       .appendTo(container);
+
+    if (beforeEl && beforeEl.length > 0) {
+      btnGrp.insertBefore(beforeEl);
+    } else {
+      btnGrp.appendTo(container);
+    }
 
     if (!show) {
       btnGrp.hide();
@@ -446,7 +464,7 @@
     return btnGrp;
   }
 
-  function bookmarkToTab(event, windowId, tabId, beforeEl) {
+  function bookmarkToTab(event, windowId, tabId, beforeEl, callback) {
     if (tabId) {
       chrome.tabs.update(tabId, {
         url: $(this).data('bookmark').url
@@ -460,6 +478,9 @@
         if (!windowId) {
           renderTab(tab, $('#tabContainer'), beforeEl);
           updateLayout();
+          if (typeof callback === 'function') {
+            callback();
+          }
         }
       });
     }
