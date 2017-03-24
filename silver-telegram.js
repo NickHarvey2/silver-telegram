@@ -253,7 +253,7 @@
   function favIconHtml(favIconUrl, container) {
     if (favIconUrl in favIconMap) {
       favIconUrl = favIconMap[favIconUrl];
-    } else if (favIconUrl && (typeof favIconUrl !== 'string' || !(favIconUrl.startsWith('http') || favIconUrl.startsWith('data')))) {
+    } else if (favIconUrl && (typeof favIconUrl !== 'string' || !(favIconUrl.startsWith('http') || favIconUrl.startsWith('data') || favIconUrl.startsWith('chrome')))) {
       favIconUrl = null;
     }
     if (favIconUrl) {
@@ -471,6 +471,8 @@
       .text(bookmark.title)
       .click(bookmarkToTab)
       .appendTo(btnGrp);
+
+    favIconHtml('chrome://favicon/' + bookmark.url, label);
 
     $('<a/>')
       .addClass('btn')
