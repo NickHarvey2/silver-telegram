@@ -10,23 +10,33 @@
   chrome.contextMenus.onClicked.addListener(function(info, tab) {
     if (info.menuItemId === 'fa46ea8e-a358-4b09-be55-901083769c45') {
       chrome.bookmarks.getTree(function(results) {
-        try {
-          let doc = document.implementation.createDocument('http://www.w3.org/1999/xml', '', null);
-          let xmlObjRep = results.map(buildXmlRepresentation, doc);
-          let xmlStrRep = new XMLSerializer().serializeToString(doc);
-          alert(xmlStrRep);
-          chrome.windows.create({
-            url: 'about:blank'
-          });
-        } catch (err) {
-          alert(err);
-        }
+        console.log(results.map(bookmarkTreeNodeToXml).join('\n'));
       });
     }
   });
 
-  function buildXmlRepresentation(xmlObjRep) {
-    // TODO
-    return {};
+  function bookmarkTreeNodeToXml(bookmarkTreeNode) {
+    let retVal = '<DT>';
+    if (bookmarkTreeNode.url) {
+      retVal += '<A HREF="';
+      retVal += bookmarkTreeNode.url;
+      retVal += '" ADD_DATE="';
+      retVal += bookmarkTreeNode.dateAdded;
+      retVal += '" ICON="';
+      retVal += ''; // TODO
+      retVal += '">';
+      retVal += bookmarkTreeNode.title;
+      retVal += '</A>';
+    } else {
+      retVal += '<H3 ADD_DATE="';
+      retVal += bookmarkTreeNode.dateAdded;
+      retVal += '" LAST_MODIFIED="';
+      retVal += bookmarkTreeNode.dateGroupModified;
+      retVal += '">';
+      retVal += bookmarkTreeNode.title;
+      retVal += '</H3>\n<DL><p>\n';
+      retVal += bookmarkTreeNode.children.map(bookmarkTreeNodeToXml).join('\n');
+    }
+    return retVal;
   }
 })();
