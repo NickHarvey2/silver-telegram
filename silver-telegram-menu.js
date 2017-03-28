@@ -39,25 +39,25 @@
       retVal += '" ADD_DATE="';
       retVal += bookmarkTreeNode.dateAdded;
       retVal += '" ICON="';
-      retVal += 'chrome://favicon/' + bookmarkTreeNode.url;
-      retVal += '">';
-      retVal += bookmarkTreeNode.title;
-      retVal += '</A>';
 
       var xhr = new XMLHttpRequest();
-      xhr.responseType = 'blob';
+      // xhr.responseType = 'blob';
       xhr.onreadystatechange = function() {
         if (this.status === 200 && this.readyState === 4) {
           let reader = new FileReader();
           reader.onloadend = function() {
-            retVal.replace(xhr.responseURL, reader.result);
+            console.log(reader.result);
+            retVal += 'chrome://favicon/' + reader.result;
           };
-          reader.readAsDataURL(this.response);
+          reader.readAsDataURL(new Blob([this.response], {type: 'image/png'}));
         }
       };
       xhr.open('GET', 'chrome://favicon/' + bookmarkTreeNode.url, false);
       xhr.send();
 
+      retVal += '">';
+      retVal += bookmarkTreeNode.title;
+      retVal += '</A>';
     } else {
       retVal += '<H3 ADD_DATE="';
       retVal += bookmarkTreeNode.dateAdded;
