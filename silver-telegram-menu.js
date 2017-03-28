@@ -34,27 +34,25 @@
     let indent = Array(this.level).fill('\t\t').join('');
     let retVal = '\n' + indent + '<DT>';
     if (bookmarkTreeNode.url) {
-      retVal += '<A HREF="';
-      retVal += bookmarkTreeNode.url;
-      retVal += '" ADD_DATE="';
-      retVal += bookmarkTreeNode.dateAdded;
-      retVal += '" ICON="';
-
       var xhr = new XMLHttpRequest();
-      // xhr.responseType = 'blob';
+      xhr.responseType = 'blob';
       xhr.onreadystatechange = function() {
         if (this.status === 200 && this.readyState === 4) {
           let reader = new FileReader();
           reader.onloadend = function() {
             console.log(reader.result);
-            retVal += 'chrome://favicon/' + reader.result;
           };
-          reader.readAsDataURL(new Blob([this.response], {type: 'image/png'}));
+          reader.readAsDataURL(this.response);
         }
       };
-      xhr.open('GET', 'chrome://favicon/' + bookmarkTreeNode.url, false);
+      xhr.open('GET', 'chrome://favicon/' + bookmarkTreeNode.url);
       xhr.send();
-
+      retVal += '<A HREF="';
+      retVal += bookmarkTreeNode.url;
+      retVal += '" ADD_DATE="';
+      retVal += bookmarkTreeNode.dateAdded;
+      retVal += '" ICON="';
+      retVal += 'chrome://favicon/' + bookmarkTreeNode.url;
       retVal += '">';
       retVal += bookmarkTreeNode.title;
       retVal += '</A>';
