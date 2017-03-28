@@ -34,21 +34,6 @@
     let indent = Array(this.level).fill('\t\t').join('');
     let retVal = '\n' + indent + '<DT>';
     if (bookmarkTreeNode.url) {
-      var xhr = new XMLHttpRequest();
-      xhr.responseType = 'blob';
-      xhr.onreadystatechange = function() {
-        if (this.status === 200 && this.readyState === 4) {
-          console.log(this.response);
-          let reader = new FileReader();
-          reader.onloadend = function() {
-            console.log(reader.result);
-          };
-          console.log(this.responseType);
-          reader.readAsDataURL(this.response);
-        }
-      };
-      xhr.open('GET', 'chrome://favicon/' + bookmarkTreeNode.url);
-      xhr.send();
       retVal += '<A HREF="';
       retVal += bookmarkTreeNode.url;
       retVal += '" ADD_DATE="';
@@ -58,6 +43,21 @@
       retVal += '">';
       retVal += bookmarkTreeNode.title;
       retVal += '</A>';
+
+      var xhr = new XMLHttpRequest();
+      xhr.responseType = 'blob';
+      xhr.onreadystatechange = function() {
+        if (this.status === 200 && this.readyState === 4) {
+          let reader = new FileReader();
+          reader.onloadend = function() {
+            retVal.replace(xhr.responseURL, reader.result);
+          };
+          reader.readAsDataURL(this.response);
+        }
+      };
+      xhr.open('GET', 'chrome://favicon/' + bookmarkTreeNode.url, false);
+      xhr.send();
+
     } else {
       retVal += '<H3 ADD_DATE="';
       retVal += bookmarkTreeNode.dateAdded;
