@@ -132,9 +132,7 @@
     $('#tabContainer').disableSelection();
 
     $('body').on('click', '#addCatBtn', function(event) {
-      $('body').one('click', '#createCategory', function() {
-        createCategoryEventHandler();
-      });
+      $('body').one('click', '#createCategory', createCategoryAndCloseDialog);
     });
 
     $('.modal[role="dialog"]').on('shown.bs.modal', function() {
@@ -147,11 +145,16 @@
 
   function createCategoryEventHandler(event) {
     if (event.which == 13 && $(this).val() && $(this).val().length > 0) {
-      createCategory($('#newCategoryInput').val());
-      $('#newCategoryInput').val('');
       $('body').off('keyup', '.modal[role="dialog"] input:visible', createCategoryEventHandler);
-      $('.modal[role="dialog"]').modal('hide');
+      createCategoryAndCloseDialog();
     }
+  }
+
+  function createCategoryAndCloseDialog() {
+    $('body').off('click', '#createCategory', createCategoryAndCloseDialog);
+    createCategory($('#newCategoryInput').val());
+    $('#newCategoryInput').val('');
+    $('.modal[role="dialog"]').modal('hide');
   }
 
   function sortStart(event, ui) {
