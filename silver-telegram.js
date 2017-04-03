@@ -116,7 +116,8 @@
       stop: sortStopBookMark,
       over: over,
       items: '.movable',
-      connectWith: '#tabContainer'
+      connectWith: '#tabContainer',
+      distance: 5
     });
     $('#bookmarkContainer').disableSelection();
     $('#tabContainer').sortable({
@@ -125,7 +126,8 @@
       stop: sortStopTab,
       over: over,
       items: '.movable',
-      connectWith: '#bookmarkContainer'
+      connectWith: '#bookmarkContainer',
+      distance: 5
     });
     $('#tabContainer').disableSelection();
 
@@ -139,6 +141,8 @@
       $(this).find('input').first().focus();
       $('body').on('keyup', '.modal[role="dialog"] input:visible', createCategoryEventHandler);
     });
+
+    $('#search').focus();
   });
 
   function createCategoryEventHandler(event) {
@@ -205,7 +209,8 @@
   function filterTabItems(filterString) {
     if (filterString) {
       $('#tabContainer').children('.btn-group').each(function(idx, item) {
-        if ($(item).children('.btn-label').text().toUpperCase().search(filterString.toUpperCase()) >= 0) {
+        if ($(item).children('.btn-label').text().toUpperCase().search(filterString.toUpperCase()) >= 0
+            || $(item).attr('title').toUpperCase().search(filterString.toUpperCase()) >= 0) {
           $(item).show();
         } else {
           $(item).hide();
@@ -221,7 +226,8 @@
       $('#categoryContainer').hide();
       $('#bookmarkContainer').addClass('remove-pad');
       $('#bookmarkContainer').children('.btn-group').each(function(idx, item) {
-        if ($(item).children('.btn-label').text().toUpperCase().search(filterString.toUpperCase()) >= 0) {
+        if ($(item).children('.btn-label').text().toUpperCase().search(filterString.toUpperCase()) >= 0
+            || $(item).attr('title').toUpperCase().search(filterString.toUpperCase()) >= 0) {
           $(item).show();
         } else {
           $(item).hide();
@@ -276,6 +282,7 @@
       .addClass('pad-top')
       .data('tab', tab)
       .attr('role', 'group')
+      .attr('title', tab.url)
       .attr('aria-label', '...');
 
     if (beforeEl && beforeEl.length > 0) {
@@ -436,6 +443,7 @@
       .addClass('movable')
       .data('bookmark', bookmark)
       .attr('role', 'group')
+      .attr('title', bookmark.url)
       .attr('aria-label', '...')
       .appendTo(container);
 
