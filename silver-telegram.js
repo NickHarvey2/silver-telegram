@@ -50,7 +50,7 @@
       renderCategories(bookmarks, categoryContainer);
     });
 
-    $('body').on('keyup', '#search', function() {
+    $('body').on('keyup', '#search', function(event) {
       let val = $(this).val();
       if (val.length > 2) {
         filterTabItems(val);
@@ -60,6 +60,11 @@
         filterBookmarkItems('');
       }
       updateLayout();
+      if (event.which == 13 && val.length > 2) {
+        bookmarkToTab.apply($('#bookmarkContainer').children('.btn-group').filter(':visible').first().children('.btn-label'), [null, null, null, null, function(tab) {
+          chrome.tabs.update(tab.id, {active: true});
+        }]);
+      }
     });
 
     $('body').on('click', '#clearSearch', function() {
@@ -398,7 +403,7 @@
               }
               updateLayout();
               if (typeof callback === 'function') {
-                callback();
+                callback(createdBookmark);
               }
             });
           }
@@ -514,7 +519,7 @@
           renderTab(tab, $('#tabContainer'), beforeEl);
           updateLayout();
           if (typeof callback === 'function') {
-            callback();
+            callback(tab);
           }
         }
       });
