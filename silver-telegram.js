@@ -309,7 +309,7 @@
     let closeBtn = $('<a/>')
       .addClass('btn')
       .attr('role', 'button')
-      .attr('href', tab.url)
+      .data('href', tab.url)
       .attr('title', tab.title)
       .appendTo(btnGrp).append($('<span/>')
         .addClass('glyphicon')
@@ -337,7 +337,7 @@
       .addClass('btn')
       .addClass('saveBtn')
       .attr('role', 'button')
-      .attr('href', tab.url)
+      .data('href', tab.url)
       .attr('title', tab.title)
       .attr('id', 'savetab-' + tab.id)
       .data('tab', tab)
@@ -386,14 +386,14 @@
       event.stopImmediatePropagation();
     }
     chrome.bookmarks.search({
-      url: context.href
+      url: $(context).data('href')
     }, function(searchResults) {
       if (searchResults.length === 0) {
         chrome.bookmarks.get(catDropdown.selected, function(results) {
           if (results.length > 0) {
             chrome.bookmarks.create({
               title: context.title,
-              url: context.href,
+              url: $(context).data('href'),
               parentId: results[0].id
             }, function(createdBookmark) {
               renderBookmark(createdBookmark, $('#bookmarkContainer'), true, beforeEl);
