@@ -1,6 +1,48 @@
 (function (){
+
   var catDropdown = null;
   var zoom;
+
+  document.addEventListener('contextmenu', event => {
+    $('.contextMenu').remove();
+    let menuOptions = $(event.target).data('menuOptions')
+    if (menuOptions) {
+      openMenu(menuOptions, event);
+    }
+    event.preventDefault();
+  });
+
+  function openMenu(menuOptions, event) {
+    $(document).one('click', function(event) {
+      $('.contextMenu').remove();
+    });
+    let menu = $('<div/>')
+      .addClass('list-group')
+      .addClass('contextMenu')
+      .css('top', `${event.clientY}px`)
+      .css('left', `${event.clientX}px`)
+      .css('visibility', 'hidden');
+    let item = $(event.target);
+    menuOptions.map(option => {
+      $('<button/>')
+        .addClass('list-group-item')
+        .text(typeof option.title == 'function' ? option.title.apply(item) : option.title)
+        .appendTo(menu)
+        .click(event => {
+          if (typeof option.action == 'function') {
+            option.action.apply(item);
+          }
+        });
+    });
+    $('body').append(menu);
+    if (event.clientY + menu.height() > window.innerHeight) {
+      menu.css('top', `${event.clientY - menu.height()}px`);
+    }
+    if (event.clientX + menu.width() > window.innerWidth) {
+      menu.css('left', `${event.clientX - menu.width()}px`);
+    }
+    menu.css('visibility', 'visible');
+  }
 
   function updateLayout() {
     if ($('#tabContainer').parent().outerHeight(true) > window.innerHeight+1 || $('#categoryContainer').parent().outerHeight(true) > window.innerHeight+1) {
@@ -284,6 +326,19 @@
   }
 
   function renderTab(tab, container, beforeEl) {
+    let tabMenuOptions = [
+      new MenuOption('Move to top'),
+      new MenuOption('Move to bottom'),
+      new MenuOption('Close'),
+      new MenuOption('Clone'),
+      new MenuOption(function() {
+        return $(this).data('tab').pinned ? 'Unpin' : 'Pin';
+      }),
+      new MenuOption('Refresh'),
+      new MenuOption('Save'),
+      new MenuOption('Save + Close')
+    ];
+
     let btnGrp = $('<div/>')
       .addClass('btn-group')
       .addClass('btn-group-xs')
@@ -321,6 +376,8 @@
       .addClass('btn-default')
       .addClass('btn-medium')
       .addClass('btn-label')
+      .data('tab', tab)
+      .data('menuOptions', tabMenuOptions)
       .attr('role', 'button')
       .attr('id','tab-' + tab.id)
       .text(title)
@@ -444,6 +501,16 @@
   }
 
   function renderBookmark(bookmark, container, show, beforeEl) {
+    let bookmarkMenuOptions = [
+      new MenuOption('Move to top'),
+      new MenuOption('Move to bottom'),
+      new MenuOption('Move to category'),
+      new MenuOption('Rename'),
+      new MenuOption('Remove'),
+      new MenuOption('Open'),
+      new MenuOption('Open + Remove')
+    ];
+
     let btnGrp = $('<div/>')
       .addClass('btn-group')
       .addClass('btn-group-xs')
@@ -483,6 +550,7 @@
       .addClass('btn-medium')
       .addClass('btn-label')
       .data('bookmark', bookmark)
+      .data('menuOptions', bookmarkMenuOptions)
       .attr('role', 'button')
       .text(bookmark.title)
       .click(bookmarkToTab)
@@ -722,6 +790,38 @@
         this.selectItem(item.text(), item.val());
         item.click();
       }
+    }
+  }
+
+  class MenuOption {
+    constructor(title, action) {
+      this.title = title;
+      this.action = action;
+      this.children = [];
+    }
+
+    setAction(action) {
+      this.action = action;
+    }
+
+    setTitle(title) {
+      this.title = title;
+    }
+
+    getChildren() {
+      return this.children;
+    }
+
+    addChild(child) {
+      this.children.push(child);
+    }
+
+    addChildren(children) {
+      children.map(child => this.children.push(child));
+    }
+
+    removeChild(child) {
+      this.children.pop(indexOf(child));
     }
   }
 

@@ -1,32 +1,11 @@
 (function (){
   let exportGuid = 'fa46ea8e-a358-4b09-be55-901083769c45';
-  let renameGuid = 'fa46ea8e-a358-4b09-be55-901083769c46';
-  let moveTopGuid = 'fa46ea8e-a358-4b09-be55-901083769c47';
-  let moveBottomGuid = 'fa46ea8e-a358-4b09-be55-901083769c48';
 
   chrome.runtime.onInstalled.addListener(function() {
     chrome.contextMenus.create({
       title: 'Export Bookmarks',
       id: exportGuid,
       contexts: ['browser_action']
-    });
-    chrome.contextMenus.create({
-      title: 'Move to top',
-      id: moveTopGuid,
-      contexts: ['link'],
-      documentUrlPatterns: ['chrome-extension://*/silver-telegram.html']
-    });
-    chrome.contextMenus.create({
-      title: 'Move to bottom',
-      id: moveBottomGuid,
-      contexts: ['link'],
-      documentUrlPatterns: ['chrome-extension://*/silver-telegram.html']
-    });
-    chrome.contextMenus.create({
-      title: 'Rename',
-      id: renameGuid,
-      contexts: ['link'],
-      documentUrlPatterns: ['chrome-extension://*/silver-telegram.html']
     });
   });
 
@@ -63,9 +42,6 @@
           xhr.send();
         })
       });
-    } else if (info.menuItemId === moveTopGuid) {
-    } else if (info.menuItemId === moveBottomGuid) {
-    } else if (info.menuItemId === renameGuid) {
     }
   });
 
