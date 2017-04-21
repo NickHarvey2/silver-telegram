@@ -327,16 +327,43 @@
 
   function renderTab(tab, container, beforeEl) {
     let tabMenuOptions = [
-      new MenuOption('Move to top'),
-      new MenuOption('Move to bottom'),
-      new MenuOption('Close'),
-      new MenuOption('Clone'),
+      new MenuOption('Move to top', function() {
+        $(this).parent().parent().find('.movable').first().before($(this).parent());
+        refreshTabOrder();
+      }),
+      new MenuOption('Move to bottom', function() {
+        $(this).parent().appendTo($(this).parent().parent());
+        refreshTabOrder();
+      }),
+      new MenuOption('Close', function() {
+        btnGrp.remove();
+        chrome.tabs.remove(tab.id);
+        updateLayout();
+      }),
+      new MenuOption('Clone', function() {
+        let context = this;
+        chrome.tabs.create({
+          index: $(this).data('tab').index+1,
+          url: $(this).data('tab').url,
+          active: false
+        }, function(tab) {
+          renderTab(tab, $('#tabContainer'), $('#tabContainer').children(`:nth-child(${$(context).data('tab').index+1})`));
+          // TODO?
+          updateLayout();
+        });
+      }),
       new MenuOption(function() {
         return $(this).data('tab').pinned ? 'Unpin' : 'Pin';
       }),
-      new MenuOption('Refresh'),
-      new MenuOption('Save'),
-      new MenuOption('Save + Close')
+      new MenuOption('Refresh', function() {
+        // TODO
+      }),
+      new MenuOption('Save', function() {
+        // TODO
+      }),
+      new MenuOption('Save + Close', function() {
+        // TODO
+      })
     ];
 
     let btnGrp = $('<div/>')
@@ -502,13 +529,29 @@
 
   function renderBookmark(bookmark, container, show, beforeEl) {
     let bookmarkMenuOptions = [
-      new MenuOption('Move to top'),
-      new MenuOption('Move to bottom'),
-      new MenuOption('Move to category'),
-      new MenuOption('Rename'),
-      new MenuOption('Remove'),
-      new MenuOption('Open'),
-      new MenuOption('Open + Remove')
+      new MenuOption('Move to top', function() {
+        $(this).parent().prependTo($(this).parent().parent());
+        refreshBookmarkOrder();
+      }),
+      new MenuOption('Move to bottom', function() {
+        $(this).parent().appendTo($(this).parent().parent());
+        refreshBookmarkOrder();
+      }),
+      new MenuOption('Move to category', function() {
+        // TODO
+      }),
+      new MenuOption('Rename', function() {
+        // TODO
+      }),
+      new MenuOption('Remove', bookmarkRemove),
+      new MenuOption('Open', function() {
+        bookmarkToTab.apply(this)
+      }),
+      new MenuOption('Open + Remove', function() {
+        bookmarkToTab.apply(this, [null, null, null, null, function() {
+          bookmarkRemove.apply(this);
+        }])
+      })
     ];
 
     let btnGrp = $('<div/>')
@@ -578,6 +621,7 @@
         url: $(this).data('bookmark').url
       });
     } else {
+      let context = this;
       chrome.tabs.create({
         url: $(this).data('bookmark').url,
         active: false,
@@ -587,7 +631,7 @@
           renderTab(tab, $('#tabContainer'), beforeEl);
           updateLayout();
           if (typeof callback === 'function') {
-            callback(tab);
+            callback.apply(context, [tab]);
           }
         }
       });
