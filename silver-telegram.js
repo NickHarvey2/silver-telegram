@@ -62,9 +62,12 @@
     }, function(tabs) {
       tabs.map(function(tab) {
         let saveBtn = $('a#savetab-' + tab.id);
+        let closeBtn = $('a#closetab-' + tab.id);
         if (tab.pinned) {
-          disableSaveBtn(saveBtn)
+          disableSaveBtn(saveBtn);
+          disableCloseBtn(closeBtn);
         } else {
+          enableCloseBtn(closeBtn);
           chrome.bookmarks.search({
             url: tab.url
           }, function(bookmarks) {
@@ -301,6 +304,7 @@
     if (changeinfo.title || changeinfo.favIconUrl) {
       let label = $('#tab-' + tabId);
       label.text(tab.title);
+      label.attr('title', tab.title);
       $('#savetab-' + tabId).attr('title', tab.title);
       favIconHtml(tab.favIconUrl, label);
     }
@@ -340,29 +344,35 @@
         chrome.tabs.remove(tab.id);
         updateLayout();
       }),
-      new MenuOption('Clone', function() {
-        let context = this;
-        chrome.tabs.create({
-          index: $(this).data('tab').index+1,
-          url: $(this).data('tab').url,
-          active: false
-        }, function(tab) {
-          renderTab(tab, $('#tabContainer'), $('#tabContainer').children(`:nth-child(${$(context).data('tab').index+1})`));
-          // TODO?
-          updateLayout();
-        });
-      }),
       new MenuOption(function() {
         return $(this).data('tab').pinned ? 'Unpin' : 'Pin';
+      }, function() {
+        let context = this;
+        if ($(this).data('tab').pinned) {
+          chrome.tabs.update($(this).data('tab').id, {pinned: false}, function(tab) {
+            $(context).data('tab', tab);
+          });
+          $(this).parent().addClass('movable');
+        } else {
+          chrome.tabs.update($(this).data('tab').id, {pinned: true}, function(tab) {
+            $(context).data('tab', tab);
+          });
+          $(this).parent().removeClass('movable');
+        }
+        let data = $(this).data();
+        $(this).parent().remove();
+        $('#tabContainer div.movable').filter(':first').before($(this).parent());
+        $(this).data(data);
+        updateLayout();
       }),
       new MenuOption('Refresh', function() {
-        // TODO
+        chrome.tabs.reload($(this).data('tab').id);
       }),
       new MenuOption('Save', function() {
-        // TODO
+        tabToBookmark.apply(this, [null, true]);
       }),
       new MenuOption('Save + Close', function() {
-        // TODO
+        tabToBookmark.apply(this, [null, false]);
       })
     ];
 
@@ -390,8 +400,10 @@
 
     let closeBtn = $('<a/>')
       .addClass('btn')
+      .addClass('closeBtn')
+      .attr('id', 'closetab-' + tab.id)
       .attr('role', 'button')
-      .data('href', tab.url)
+      .attr('href', tab.url)
       .attr('title', tab.title)
       .appendTo(btnGrp).append($('<span/>')
         .addClass('glyphicon')
@@ -407,6 +419,8 @@
       .data('menuOptions', tabMenuOptions)
       .attr('role', 'button')
       .attr('id','tab-' + tab.id)
+      .attr('href', tab.url)
+      .attr('title', tab.title)
       .text(title)
       .click(function(){
         chrome.tabs.update(tab.id, {
@@ -421,7 +435,7 @@
       .addClass('btn')
       .addClass('saveBtn')
       .attr('role', 'button')
-      .data('href', tab.url)
+      .attr('href', tab.url)
       .attr('title', tab.title)
       .attr('id', 'savetab-' + tab.id)
       .data('tab', tab)
@@ -438,14 +452,17 @@
       btnGrp.addClass('movable');
       closeBtn
         .addClass('btn-danger')
-        .click(function() {
-          btnGrp.remove();
-          chrome.tabs.remove(tab.id);
-          updateLayout();
-        });
+        .click(tabRemove);
     }
 
     return btnGrp;
+  }
+
+  function tabRemove() {
+    let tab = $(this).next().data('tab');
+    $(this).parent().remove();
+    chrome.tabs.remove(tab.id);
+    updateLayout();
   }
 
   function disableSaveBtn(saveBtn) {
@@ -464,20 +481,36 @@
       .one('click', tabToBookmark);
   }
 
+  function disableCloseBtn(closeBtn) {
+    closeBtn
+      .removeClass('btn-danger')
+      .addClass('btn-default')
+      .addClass('disabled')
+      .off();
+  }
+
+  function enableCloseBtn(closeBtn) {
+    closeBtn
+      .removeClass('btn-default')
+      .addClass('btn-danger')
+      .removeClass('disabled')
+      .one('click', tabRemove);
+  }
+
   function tabToBookmark(event, keepTab, beforeEl, callback) {
     var context = this;
     if (event && typeof event.stopImmediatePropagation == 'function') {
       event.stopImmediatePropagation();
     }
     chrome.bookmarks.search({
-      url: $(context).data('href')
+      url: $(context).attr('href')
     }, function(searchResults) {
       if (searchResults.length === 0) {
         chrome.bookmarks.get(catDropdown.selected, function(results) {
           if (results.length > 0) {
             chrome.bookmarks.create({
-              title: context.title,
-              url: $(context).data('href'),
+              title: context.title || context.attr('title') ,
+              url: $(context).attr('href'),
               parentId: results[0].id
             }, function(createdBookmark) {
               renderBookmark(createdBookmark, $('#bookmarkContainer'), true, beforeEl);
@@ -499,6 +532,7 @@
   function renderCategories(bookmarks, categoryContainer) {
     let selectedId = window.localStorage.getItem('silver_telegram_selected');;
     catDropdown = new Dropdown('Category: {item} ', categoryContainer);
+    bookmarks.sort((a, b) => a.title.localeCompare(b.title));
     bookmarks.map(function(bookmark) {
       var category = catDropdown.addItem(bookmark.title, selectCategory, bookmark.id);
       chrome.bookmarks.getChildren(bookmark.id, function(children) {
