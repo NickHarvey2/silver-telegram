@@ -2,6 +2,7 @@
 
   var catDropdown = null;
   var zoom;
+  var categories = [];
 
   document.addEventListener('contextmenu', event => {
     $('.contextMenu').remove();
@@ -12,7 +13,7 @@
     event.preventDefault();
   });
 
-  function openMenu(menuOptions, event) {
+  function openMenu(menuOptions, event, parentMenu) {
     $(document).one('click', function(event) {
       $('.contextMenu').remove();
     });
@@ -22,26 +23,67 @@
       .css('top', `${event.clientY}px`)
       .css('left', `${event.clientX}px`)
       .css('visibility', 'hidden');
+    if  (!parentMenu) {
+      menu.addClass('rootMenu');
+    }
     let item = $(event.target);
     menuOptions.map(option => {
-      $('<button/>')
+      var subMenu;
+      let optionItem = $('<button/>')
         .addClass('list-group-item')
         .text(typeof option.title == 'function' ? option.title.apply(item) : option.title)
         .appendTo(menu)
         .click(event => {
           if (typeof option.action == 'function') {
-            option.action.apply(item);
+            option.action.apply(item, [option]);
+          }
+        })
+        .mouseenter(event => {
+          let x = optionItem.offset().left + menu.width();
+          let y = optionItem.offset().top;
+          let children = typeof option.children == 'array' ? option.children : typeof option.children == 'function' ? option.children.apply(item) : [];
+          subMenu = openMenu(children, {
+            target: item[0],
+            clientX: x,
+            clientY: y
+          }, menu).mouseleave(event => {
+            if (event.clientX < optionItem.offset().left - 3
+              || event.clientX > optionItem.offset().left + optionItem.width() + 3
+              || event.clientY < optionItem.offset().top - 3
+              || event.clientY > optionItem.offset().top + optionItem.height() + 3) {
+              $('.contextMenu').not('.rootMenu').not(menu).remove();
+            }
+          });
+        })
+        .mouseleave(event => {
+          if (event.clientX < subMenu.offset().left - 3
+            || event.clientX > subMenu.offset().left + subMenu.width() + 3
+            || event.clientY < subMenu.offset().top - 3
+            || event.clientY > subMenu.offset().top + subMenu.height() + 3) {
+            $('.contextMenu').not('.rootMenu').not(menu).remove();
           }
         });
     });
     $('body').append(menu);
     if (event.clientY + menu.height() > window.innerHeight) {
-      menu.css('top', `${event.clientY - menu.height()}px`);
+      if (parentMenu) {
+        menu.css('top', `${event.clientY - menu.height() + menu.find('button').first().outerHeight()}px`);
+      } else {
+        menu.css('top', `${event.clientY - menu.height()}px`);
+      }
+    }
+    if (event.clientY - menu.height() < 0) {
+      menu.css('top', `${0}px`);
     }
     if (event.clientX + menu.width() > window.innerWidth) {
-      menu.css('left', `${event.clientX - menu.width()}px`);
+      if (parentMenu) {
+        menu.css('left', `${event.clientX - menu.width() - parentMenu.width()}px`);
+      } else {
+        menu.css('left', `${event.clientX - menu.width()}px`);
+      }
     }
     menu.css('visibility', 'visible');
+    return menu;
   }
 
   function updateLayout() {
@@ -533,6 +575,7 @@
     let selectedId = window.localStorage.getItem('silver_telegram_selected');;
     catDropdown = new Dropdown('Category: {item} ', categoryContainer);
     bookmarks.sort((a, b) => a.title.localeCompare(b.title));
+    categories = bookmarks;
     bookmarks.map(function(bookmark) {
       var category = catDropdown.addItem(bookmark.title, selectCategory, bookmark.id);
       chrome.bookmarks.getChildren(bookmark.id, function(children) {
@@ -561,6 +604,25 @@
     updateLayout();
   }
 
+  function moveToCategory(menuOption) {
+    let context = this;
+    chrome.bookmarks.search({
+      url: null,
+      title: menuOption.title
+    }, function(categories) {
+      if (categories.length === 1) {
+        let items = $(`#categoryContainer a#${categories[0].id}`).data().items;
+        items.pop(items.indexOf(context.parent()));
+        chrome.bookmarks.move(context.data('bookmark').id, {
+          parentId: categories[0].id
+        }, function(result) {
+          items.push(context.parent());
+          context.parent().hide();
+        });
+      }
+    });
+  }
+
   function renderBookmark(bookmark, container, show, beforeEl) {
     let bookmarkMenuOptions = [
       new MenuOption('Move to top', function() {
@@ -571,20 +633,17 @@
         $(this).parent().appendTo($(this).parent().parent());
         refreshBookmarkOrder();
       }),
-      new MenuOption('Move to category', function() {
-        // TODO
-      }),
-      new MenuOption('Rename', function() {
-        // TODO
+      new MenuOption('Move to category', null, function() {
+        return categories.map(category => new MenuOption(category.title, moveToCategory));
       }),
       new MenuOption('Remove', bookmarkRemove),
       new MenuOption('Open', function() {
-        bookmarkToTab.apply(this)
+        bookmarkToTab.apply(this);
       }),
       new MenuOption('Open + Remove', function() {
         bookmarkToTab.apply(this, [null, null, null, null, function() {
           bookmarkRemove.apply(this);
-        }])
+        }]);
       })
     ];
 
@@ -718,6 +777,7 @@
   function deleteCategory(category) {
     catDropdown.removeItem(catDropdown.selected);
     chrome.bookmarks.removeTree(catDropdown.selected);
+    categories.pop(categories.indexOf(catDropdown.selected));
     catDropdown.selectDefault();
   }
 
@@ -728,6 +788,8 @@
         url: null,
         parentId: rootBookmark.id
       }, function(createdBookmark) {
+          categories.push(createdBookmark);
+          categories.sort((a, b) => a.title.localeCompare(b.title));
           let item = catDropdown.addItem(catName, selectCategory, createdBookmark.id);
           selectCategory.apply(item[0]);
           catDropdown.selectItem(catName, createdBookmark.id);
@@ -872,10 +934,10 @@
   }
 
   class MenuOption {
-    constructor(title, action) {
+    constructor(title, action, children) {
       this.title = title;
       this.action = action;
-      this.children = [];
+      this.children = children ? children : [];
     }
 
     setAction(action) {

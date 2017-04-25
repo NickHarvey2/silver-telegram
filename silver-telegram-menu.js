@@ -1,10 +1,16 @@
 (function (){
   let exportGuid = 'fa46ea8e-a358-4b09-be55-901083769c45';
+  let manageGuid = 'fa46ea8e-a358-4b09-be55-901083769c46';
 
   chrome.runtime.onInstalled.addListener(function() {
     chrome.contextMenus.create({
       title: 'Export Bookmarks',
       id: exportGuid,
+      contexts: ['browser_action']
+    });
+    chrome.contextMenus.create({
+      title: 'Manage Bookmarks',
+      id: manageGuid,
       contexts: ['browser_action']
     });
   });
@@ -42,6 +48,8 @@
           xhr.send();
         })
       });
+    } else if (info.menuItemId === manageGuid) {
+      chrome.tabs.create({url: 'chrome://bookmarks/'});
     }
   });
 
