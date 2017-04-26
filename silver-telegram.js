@@ -22,7 +22,8 @@
       .addClass('contextMenu')
       .css('top', `${event.clientY}px`)
       .css('left', `${event.clientX}px`)
-      .css('visibility', 'hidden');
+      .css('visibility', 'hidden')
+      .css('max-height', window.innerHeight);
     if  (!parentMenu) {
       menu.addClass('rootMenu');
     }
