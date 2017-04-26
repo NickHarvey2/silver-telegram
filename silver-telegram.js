@@ -11,12 +11,12 @@
       openMenu(menuOptions, event);
     }
     event.preventDefault();
-  });
-
-  function openMenu(menuOptions, event, parentMenu) {
     $(document).one('click', function(event) {
       $('.contextMenu').remove();
     });
+  });
+
+  function openMenu(menuOptions, event, parentMenu) {
     let menu = $('<div/>')
       .addClass('list-group')
       .addClass('contextMenu')
@@ -839,6 +839,9 @@
         .addClass('btn-medium')
         .addClass('btn-label')
         .addClass('dropdown-toggle')
+        .click(event => {
+          $('.contextMenu').remove();
+        })
         .appendTo(btnGroup);
 
       this.labelSpan = $('<span/>')
