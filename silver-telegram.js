@@ -20,7 +20,7 @@
     let menu = $('<div/>')
       .addClass('list-group')
       .addClass('contextMenu')
-      .css('top', `${event.clientY}px`)
+      .css('top', `${event.clientY+window.scrollY}px`)
       .css('left', `${event.clientX}px`)
       .css('visibility', 'hidden')
       .css('max-height', window.innerHeight);
