@@ -350,6 +350,12 @@
       label.attr('title', tab.title);
       $('#savetab-' + tabId).attr('title', tab.title);
       favIconHtml(tab.favIconUrl, label);
+    } else if (changeinfo.status === "complete") {
+      let label = $('#tab-' + tabId);
+      label.text(tab.title);
+      label.attr('title', tab.title);
+      $('#savetab-' + tabId).attr('title', tab.title);
+      favIconHtml(tab.favIconUrl, label);
     }
   });
 
