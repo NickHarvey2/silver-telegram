@@ -9,19 +9,12 @@
     "default_icon": "silver-telegram.png",
     "default_popup": "silver-telegram.html"
   },
-  "background": {
-    "scripts": ["silver-telegram-menu.js"],
-    "persistent": false
-  },
   "permissions": [
     "activeTab",
     "tabs",
     "bookmarks",
-    "file:///*",
-    "chrome://favicon/*",
-    "contextMenus",
-    "windows",
-    "downloads"
+    "downloads",
+    "file:///*"
   ],
   "commands": {
     "_execute_browser_action": {

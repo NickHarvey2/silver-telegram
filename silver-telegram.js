@@ -192,14 +192,13 @@
     });
 
     $('body').on('click', '#openAllNewWin', function() {
-      chrome.windows.create(function(newWin) {
-        $('#bookmarkContainer a.btn-label').filter(':visible').each(function(idx, item) {
-          if (idx === 0 && newWin.tabs.length === 1 && newWin.tabs[0].url === 'chrome://newtab/') {
-            bookmarkToTab.apply(item, [null, newWin.id, newWin.tabs[0].id]);
-          } else {
-            bookmarkToTab.apply(item, [null, newWin.id]);
-          }
-        });
+      var items = $('#bookmarkContainer a.btn-label').filter(':visible');
+      var urls = [];
+      items.map(function(idx) {
+        urls.push($(this).data('bookmark').url);
+      });
+      chrome.windows.create({
+        url: urls
       })
     });
 
