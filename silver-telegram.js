@@ -111,15 +111,19 @@
           disableCloseBtn(closeBtn);
         } else {
           enableCloseBtn(closeBtn);
-          chrome.bookmarks.search({
-            url: tab.url
-          }, function(bookmarks) {
-            if (bookmarks.length > 0) {
-              disableSaveBtn(saveBtn);
-            } else {
-              enableSaveBtn(saveBtn);
-            }
-          });
+          if (tab.url.substr(0,6) === "about:"){
+            disableSaveBtn(saveBtn);
+          } else {
+            chrome.bookmarks.search({
+              url: tab.url
+            }, function(bookmarks) {
+              if (bookmarks.length > 0) {
+                disableSaveBtn(saveBtn);
+              } else {
+                enableSaveBtn(saveBtn);
+              }
+            });
+          }
         }
       });
     });
@@ -359,9 +363,23 @@
   });
 
   function favIconHtml(favIconUrl, container) {
-    if (favIconUrl in favIconMap) {
-      favIconUrl = favIconMap[favIconUrl];
-    } else if (favIconUrl && (typeof favIconUrl !== 'string' || !(favIconUrl.startsWith('http') || favIconUrl.startsWith('data') || favIconUrl.startsWith('chrome')))) {
+    if (favIconUrl && typeof favIconUrl === 'string' && favIconUrl.startsWith('favicon:')) {
+      browser.storage.sync.get(favIconUrl, function(data) {
+        if (data[favIconUrl]) {
+          $('<img/>')
+            .attr('src', data[favIconUrl])
+            .addClass('favIcon')
+            .prependTo(container);
+        } else {
+          $('<span/>')
+            .addClass('favIcon')
+            .addClass('favIconSpacer')
+            .prependTo(container);
+        }
+      });
+      return;
+    }
+    if (favIconUrl && (typeof favIconUrl !== 'string' || !(favIconUrl.startsWith('http') || favIconUrl.startsWith('data') || favIconUrl.startsWith('chrome')))) {
       favIconUrl = null;
     }
     if (favIconUrl) {
@@ -451,7 +469,7 @@
       .addClass('closeBtn')
       .attr('id', 'closetab-' + tab.id)
       .attr('role', 'button')
-      .attr('href', tab.url)
+      .data('url', tab.url)
       .attr('title', tab.title)
       .appendTo(btnGrp).append($('<span/>')
         .addClass('glyphicon')
@@ -467,7 +485,7 @@
       .data('menuOptions', tabMenuOptions)
       .attr('role', 'button')
       .attr('id','tab-' + tab.id)
-      .attr('href', tab.url)
+      .data('url', tab.url)
       .attr('title', tab.title)
       .text(title)
       .click(function(){
@@ -483,7 +501,7 @@
       .addClass('btn')
       .addClass('saveBtn')
       .attr('role', 'button')
-      .attr('href', tab.url)
+      .data('url', tab.url)
       .attr('title', tab.title)
       .attr('id', 'savetab-' + tab.id)
       .data('tab', tab)
@@ -551,25 +569,30 @@
       event.stopImmediatePropagation();
     }
     chrome.bookmarks.search({
-      url: $(context).attr('href')
+      url: $(context).data('url')
     }, function(searchResults) {
       if (searchResults.length === 0) {
         chrome.bookmarks.get(catDropdown.selected, function(results) {
           if (results.length > 0) {
-            chrome.bookmarks.create({
-              title: context.title || context.attr('title') ,
-              url: $(context).attr('href'),
-              parentId: results[0].id
-            }, function(createdBookmark) {
-              renderBookmark(createdBookmark, $('#bookmarkContainer'), true, beforeEl);
-              if (!keepTab) {
-                $(context).parent().remove();
-                chrome.tabs.remove(parseInt($(context).attr('id').split('-')[1]));
-              }
-              updateLayout();
-              if (typeof callback === 'function') {
-                callback(createdBookmark);
-              }
+            chrome.tabs.get(parseInt($(context).attr('id').split('-')[1]), function(tab) {
+              var d = {};
+              d['favicon:' + $(context).data('url')] = tab.favIconUrl;
+              browser.storage.sync.set(d);
+              chrome.bookmarks.create({
+                title: context.title || context.attr('title') ,
+                url: $(context).data('url'),
+                parentId: results[0].id
+              }, function(createdBookmark) {
+                renderBookmark(createdBookmark, $('#bookmarkContainer'), true, beforeEl);
+                if (!keepTab) {
+                  $(context).parent().remove();
+                  chrome.tabs.remove(tab.id);
+                }
+                updateLayout();
+                if (typeof callback === 'function') {
+                  callback(createdBookmark);
+                }
+              });
             });
           }
         });
@@ -698,7 +721,7 @@
       .click(bookmarkToTab)
       .appendTo(btnGrp);
 
-    favIconHtml('chrome://favicon/' + bookmark.url, label);
+    favIconHtml('favicon:' + bookmark.url, label);
 
     $('<a/>')
       .addClass('btn')
@@ -973,10 +996,4 @@
       this.children.pop(indexOf(child));
     }
   }
-
-  var favIconMap = {
-    'chrome://theme/IDR_EXTENSIONS_FAVICON@2x': 'IDR_EXTENSIONS_FAVICON@2x.png',
-    'chrome://theme/IDR_SETTINGS_FAVICON@2x': 'IDR_SETTINGS_FAVICON@2x.png',
-    'chrome://theme/IDR_PRODUCT_LOGO_16@2x': 'IDR_PRODUCT_LOGO_16@2x.png'
-  };
 })();
